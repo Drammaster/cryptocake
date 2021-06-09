@@ -268,8 +268,11 @@ def order():
         
     #     return(resp.json())
 
+    
     # Load data from post
     data = json.loads(request.data)
+
+    order_type = ""
 
     # Check for security phrase
     if data['passphrase'] != config.WEBHOOK_PHRASE:
@@ -311,21 +314,19 @@ def order():
             quantity = float(assets['free'])
 
         exchange = data['coinMain'] + data['coinSecondary']
-        if data['coinMain'] + data['coinSecondary'] == 'CAKEBUSD':
-            if quantity > 0:
-                order_response = order_function(side, round(quantity - 0.001, 3), exchange, order_type)
+        
+        step = client.get_symbol_info(exchange)
+        stepMin = float(step['filters'][2]['stepSize'])
+        stepMinSize = str(stepMin)[::-1].find('.')
+
+
+        if quantity > 0:
+            if order_type != "":
+                order_response = order_function(side, round(quantity - stepMin, stepMinSize), exchange, order_type)
             else:
-                order_response = True
-        # elif data['coinMain'] + data['coinSecondary'] == 'BTCBUSD':
-        #     if quantity > 0:
-        #         order_response = order_function(side, round(quantity - 0.000001, 6), exchange, order_type)
-        #     else:
-        #         order_response = True
-        # elif data['coinMain'] + data['coinSecondary'] == 'BNBBUSD':
-        #     if quantity > 0:
-        #         order_response = order_function(side, round(quantity - 0.0001, 4), exchange, order_type)
-        #     else:
-        #         order_response = True
+                order_response = "This bot doesn't exist"
+        else:
+            order_response = "No allowance"
 
 
         if float(client.get_asset_balance(asset=data['coinSecondary'])['free']) > 10 and side == "BUY":
@@ -335,7 +336,12 @@ def order():
                     "message": "order executed"
                 }
         else:
-            if order_response:
+            if order_response == "No allowance" or order_response == "This bot doesn't exist":
+                return {
+                    "code": "error",
+                    "message": order_response
+                }
+            elif order_response:
                 return {
                     "code": "success",
                     "message": "order executed"
@@ -466,16 +472,18 @@ def manage_bot():
 def stoploss():
     
     data = client.get_symbol_info('CAKEBUSD')
+    stepMin = str(float(data['filters'][2]['stepSize']))
+    stepMinSize = stepMin[::-1].find('.')
 
-
-
-    return (data)
+    return (str(stepMinSize))
 
 @app.route('/ordertesting', methods=['POST'])
 def testing():
 
     # Load data from post
     data = json.loads(request.data)
+
+    order_type = ""
 
     # Check for security phrase
     if data['passphrase'] != config.WEBHOOK_PHRASE:
@@ -517,21 +525,19 @@ def testing():
             quantity = float(assets['free'])
 
         exchange = data['coinMain'] + data['coinSecondary']
-        if data['coinMain'] + data['coinSecondary'] == 'CAKEBUSD':
-            if quantity > 0:
-                order_response = order_function(side, round(quantity - 0.001, 3), exchange, order_type)
+        
+        step = client.get_symbol_info(exchange)
+        stepMin = float(step['filters'][2]['stepSize'])
+        stepMinSize = str(stepMin)[::-1].find('.')
+
+
+        if quantity > 0:
+            if order_type != "":
+                order_response = order_function(side, round(quantity - stepMin, stepMinSize), exchange, order_type)
             else:
-                order_response = True
-        # elif data['coinMain'] + data['coinSecondary'] == 'BTCBUSD':
-        #     if quantity > 0:
-        #         order_response = order_function(side, round(quantity - 0.000001, 6), exchange, order_type)
-        #     else:
-        #         order_response = True
-        # elif data['coinMain'] + data['coinSecondary'] == 'BNBBUSD':
-        #     if quantity > 0:
-        #         order_response = order_function(side, round(quantity - 0.0001, 4), exchange, order_type)
-        #     else:
-        #         order_response = True
+                order_response = "This bot doesn't exist"
+        else:
+            order_response = "No allowance"
 
 
         if float(client.get_asset_balance(asset=data['coinSecondary'])['free']) > 10 and side == "BUY":
@@ -541,7 +547,12 @@ def testing():
                     "message": "order executed"
                 }
         else:
-            if order_response:
+            if order_response == "No allowance" or order_response == "This bot doesn't exist":
+                return {
+                    "code": "error",
+                    "message": order_response
+                }
+            elif order_response:
                 return {
                     "code": "success",
                     "message": "order executed"
