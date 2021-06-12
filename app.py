@@ -532,20 +532,17 @@ def stoploss():
 
     stop_loss = data['stop_loss'] #Stop loss percentage
     take_profit = data['take_profit'] #Profit taking percentage
-    trailing_loss = data['trailing_loss']
+    trailing_loss = data['trailing_loss'] #Trailing loss percentage
 
     def process_message_trade(msg):
         value = float(msg['p'])
         print(msg['p'])
         if float(price['price']) * take_profit <= value or float(price['price']) * stop_loss >= value:
             print("Bought:", price['price'], "Success", str(value))
-            
-            return({'success': 'done'})
+            bm.stop_socket(selected_socket)
 
     bm = BinanceSocketManager(client)
     # start any sockets here, i.e a trade socket
-    bm.start_trade_socket(data['coinMain'] + data['coinSecondary'], process_message_trade)
+    selected_socket = bm.start_trade_socket(data['coinMain'] + data['coinSecondary'], process_message_trade)
     # then start the socket manager
     bm.start()
-
-    return("Order has been made at:", price['price'])
