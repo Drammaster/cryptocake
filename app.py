@@ -16,9 +16,9 @@ app = Flask(__name__)
 
 trading_bots_binance = [
     {
-        'name': "Cake Bot",
-        'exchange_pair': "CAKEBUSD",
-        'crypto': 'CAKE',
+        'name': "BTC Bot",
+        'exchange_pair': "BTCBUSD",
+        'crypto': 'BTC',
         'hold': 100,
         'holds': True,
         'value': 200,
@@ -528,7 +528,6 @@ def stoploss():
     data = json.loads(request.data)
 
     price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['coinMain'] + data['coinSecondary']).json()
-    print(price['price'])
 
     stop_loss = data['stop_loss'] #Stop loss percentage
     take_profit = data['take_profit'] #Profit taking percentage
@@ -536,6 +535,7 @@ def stoploss():
 
     def process_message_trade(msg):
         value = float(msg['p'])
+
         print(msg['p'])
         if float(price['price']) * take_profit <= value or float(price['price']) * stop_loss >= value:
             print("Bought:", price['price'], "Success", str(value))
