@@ -251,13 +251,14 @@ def order():
         exchange = data['coinMain'] + data['coinSecondary']
         
         step = client.get_symbol_info(exchange)
-        stepMin = float(step['filters'][2]['stepSize'])
-        stepMinSize = str(stepMin)[::-1].find('.')
-
+        stepMin = step['filters'][2]['stepSize']
+        # stepMinSize = stepMin[::-1].find('.')
+        stepMinSize = 8 - stepMin[::-1].find('1')
+        print(stepMinSize)
 
         if quantity > 0:
             if order_type != "":
-                order_response = order_function(side, round(quantity - stepMin, stepMinSize), exchange, order_type)
+                order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange, order_type)
             else:
                 order_response = "This bot doesn't exist"
         else:
