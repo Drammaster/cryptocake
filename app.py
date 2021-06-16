@@ -247,6 +247,7 @@ def order():
                     i['holds'] = False
             assets = client.get_asset_balance(asset=data['coinMain'])
             quantity = float(assets['free'])
+            time.sleep(2)
 
         exchange = data['coinMain'] + data['coinSecondary']
         
