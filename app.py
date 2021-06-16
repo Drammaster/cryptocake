@@ -548,3 +548,7 @@ def stoploss():
     selected_socket = bm.start_trade_socket(data['coinMain'] + data['coinSecondary'], process_message_trade)
     # then start the socket manager
     bm.start()
+
+@app.route('/moon')
+def moon():
+    return render_template('moon.html')
