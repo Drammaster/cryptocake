@@ -27,8 +27,8 @@ trading_bots = [
         },
         'take_profit': {
             'using': True,
-            'target_profit': 1.001,
-            'trailing_deviation': 0.999
+            'target_profit': 1.01,
+            'trailing_deviation': 0.995
         },
         'has_active_deal': False,
         'active_orders': [
@@ -52,8 +52,8 @@ trading_bots = [
         },
         'take_profit': {
             'using': True,
-            'target_profit': 1.001,
-            'trailing_deviation': 0.999
+            'target_profit': 1.01,
+            'trailing_deviation': 0.995
         },
         'has_active_deal': False,
         'active_orders': [
