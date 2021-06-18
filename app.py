@@ -1,10 +1,6 @@
-import hmac
 import json, config
 import time
 import requests
-import urllib.parse
-import hashlib
-import base64
 from flask import Flask, request, render_template
 from binance.client import Client
 from binance.enums import *
@@ -325,7 +321,8 @@ def ordertesting():
 
     #If Binance trade
     if broker == 'Binance':
-        
+
+        time.sleep(1)
         if strategy['strategy'] == 'long':
 
             # Buy case
@@ -420,10 +417,6 @@ def ordertesting():
                     "message": "not enought funds"
                 }
 
-@app.route('/binance_socket_long', methods=['POST'])
-def binance_socket_starter():
-    binance_socket_start_long()
-    return("Starting Socket")
 
 @app.route('/binance_close_long', methods=['POST'])
 def binance_socket_long_closer():
@@ -435,24 +428,73 @@ def binance_socket_short_closer():
     binance_socket_close_short()
     return("Socket Closed")
 
+@app.route('/ordercheck', methods=['POST'])
+def ordercheck():
+    # Load data from post
+    data = json.loads(request.data)
+
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+    
+    #Save buy or sell into side
+    side = data['order_action'].upper()
+
+    if side == "BUY":
+        if trading_bots[0]['has_active_deal'] == True and trading_bots[1]['has_active_deal'] == False:
+            return('All good here')
+        else:
+            data = {
+                "bot_id": "001",
+                "passphrase": "S=]ypG]:oLg2gvfFNr/a2x52j+r|J=O0p]_+6x|GgAm1h;2oegx@tUebD1q<",
+                "delay_seconds": 0,
+                "order_action": "buy"
+            }
+            binance_socket_short_closer()
+            requests.post('http://127.0.0.1:5000/ordertesting', data=json.dumps(data))
+            time.sleep(3)
+            trading_bots[0]['has_active_deal'] = True
+            trading_bots[1]['has_active_deal'] = False
+            return('Corrected Issue')
+    
+    
+    if side == "SELL":
+        if trading_bots[1]['has_active_deal'] == True and trading_bots[0]['has_active_deal'] == False:
+            return('All good here')
+        else:
+            data = {
+                "bot_id": "002",
+                "passphrase": "S=]ypG]:oLg2gvfFNr/a2x52j+r|J=O0p]_+6x|GgAm1h;2oegx@tUebD1q<",
+                "delay_seconds": 0,
+                "order_action": "sell"
+            }
+            binance_socket_long_closer()
+            requests.post('http://127.0.0.1:5000/ordertesting', data=json.dumps(data))
+            time.sleep(3)
+            trading_bots[1]['has_active_deal'] = True
+            trading_bots[0]['has_active_deal'] = False
+            return('Corrected Issue')
+
+# Return Bots
+@app.route('/bots1', methods=['GET'])
+def bots1():
+    return(trading_bots[0])
+
+# Return Bots
+@app.route('/bots2', methods=['GET'])
+def bots2():
+    return(trading_bots[1])
+
+
 # Home page
 @app.route('/')
 def welcome():
     balances = client.get_account()['balances']
 
     return render_template('index.html', balances=balances)
-
-
-# Bots Page
-@app.route('/bots')
-def show_bots():
-
-    for i in trading_bots_binance:
-        pair_price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + i['exchange_pair']).json()
-        token_holding = client.get_asset_balance(asset=i['crypto'])
-        i['value'] = round(float(pair_price['price']) * float(token_holding['free']), 2)
-
-    return render_template('bots.html', bots=trading_bots_binance)
 
 
 @app.route('/moon')
