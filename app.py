@@ -454,7 +454,7 @@ def ordercheck():
                 "order_action": "buy"
             }
             binance_socket_short_closer()
-            requests.post('http://127.0.0.1:5000/ordertesting', data=json.dumps(data))
+            requests.post('https://cryptocake.herokuapp.com/ordertesting', data=json.dumps(data))
             time.sleep(3)
             trading_bots[0]['has_active_deal'] = True
             trading_bots[1]['has_active_deal'] = False
@@ -472,7 +472,7 @@ def ordercheck():
                 "order_action": "sell"
             }
             binance_socket_long_closer()
-            requests.post('http://127.0.0.1:5000/ordertesting', data=json.dumps(data))
+            requests.post('https://cryptocake.herokuapp.com/ordertesting', data=json.dumps(data))
             time.sleep(3)
             trading_bots[1]['has_active_deal'] = True
             trading_bots[0]['has_active_deal'] = False
