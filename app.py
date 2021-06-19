@@ -74,7 +74,7 @@ def process_message_trade_long(msg):
         trading_bots[0]['mark'] = True
         if socket_variable > trading_bots[0]['highest']:
             trading_bots[0]['highest'] = socket_variable
-        if socket_variable <= (float(trading_bots[0]['price']) * trading_bots[0]['take_profit']['target_profit'])  * trading_bots[0]['take_profit']['trailing_deviation'] or trading_bots[0]['highest'] * trading_bots[0]['take_profit']['trailing_deviation'] >= socket_variable:
+        if socket_variable <= float(trading_bots[0]['price']) * trading_bots[0]['take_profit']['target_profit'] or trading_bots[0]['highest'] * trading_bots[0]['take_profit']['trailing_deviation'] >= socket_variable:
             binance_socket_close_long()
             print('Entry price: ', str(trading_bots[0]['price']))
             print('Exit price: ', str(socket_variable))
@@ -90,7 +90,7 @@ def process_message_trade_short(msg):
         trading_bots[1]['mark'] = True
         if socket_variable < trading_bots[1]['highest']:
             trading_bots[1]['highest'] = socket_variable
-        if socket_variable >= (float(trading_bots[1]['price']) / trading_bots[1]['take_profit']['target_profit']) / trading_bots[1]['take_profit']['trailing_deviation'] or trading_bots[1]['highest'] / trading_bots[1]['take_profit']['trailing_deviation'] <= socket_variable:
+        if socket_variable >= float(trading_bots[1]['price']) / trading_bots[1]['take_profit']['target_profit'] or trading_bots[1]['highest'] / trading_bots[1]['take_profit']['trailing_deviation'] <= socket_variable:
             binance_socket_close_short()
             print('Entry price: ', str(trading_bots[1]['price']))
             print('Exit price: ', str(socket_variable))
@@ -132,6 +132,7 @@ def binance_socket_close_long():
         stepMin = step['filters'][2]['stepSize']
         stepMinSize = 8 - stepMin[::-1].find('1')
         order_function('SELL', round(quantity - float(stepMin), stepMinSize), trading_bots[0]['exchange_pair'], ORDER_TYPE_MARKET)
+        # print('SELL', round(quantity - float(stepMin), stepMinSize), trading_bots[0]['exchange_pair'], ORDER_TYPE_MARKET)
         trading_bots[0]['has_active_deal'] = False
 
 
@@ -162,7 +163,8 @@ def binance_socket_close_short():
         stepMinSize = 8 - stepMin[::-1].find('1')
 
         order_function('BUY', round(quantity - float(stepMin), stepMinSize), trading_bots[1]['exchange_pair'], ORDER_TYPE_MARKET)
-        trading_bots[0]['has_active_deal'] = False
+        # print('BUY', round(quantity - float(stepMin), stepMinSize), trading_bots[1]['exchange_pair'], ORDER_TYPE_MARKET)
+        trading_bots[1]['has_active_deal'] = False
 
 # Trade API
 @app.route('/order', methods=['POST'])
@@ -347,6 +349,8 @@ def ordertesting():
             if quantity > 0:
                 if strategy['order_type'] != "":
                     order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
+                    # print(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
+                    # order_response = True
                 else:
                     order_response = "This bot doesn't exist"
             else:
@@ -395,6 +399,8 @@ def ordertesting():
             if quantity > 0:
                 if strategy['order_type'] != "":
                     order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
+                    # print(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
+                    # order_response = True
                 else:
                     order_response = "This bot doesn't exist"
             else:
@@ -455,6 +461,7 @@ def ordercheck():
             }
             binance_socket_short_closer()
             requests.post('https://cryptocake.herokuapp.com/ordertesting', data=json.dumps(data))
+            # requests.post('https://localhost:5000/ordertesting', data=json.dumps(data))
             time.sleep(3)
             trading_bots[0]['has_active_deal'] = True
             trading_bots[1]['has_active_deal'] = False
@@ -473,6 +480,7 @@ def ordercheck():
             }
             binance_socket_long_closer()
             requests.post('https://cryptocake.herokuapp.com/ordertesting', data=json.dumps(data))
+            # requests.post('https://localhost:5000/ordertesting', data=json.dumps(data))
             time.sleep(3)
             trading_bots[1]['has_active_deal'] = True
             trading_bots[0]['has_active_deal'] = False
