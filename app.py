@@ -300,6 +300,8 @@ def ordertesting():
     # Load data from post
     data = json.loads(request.data)
 
+    time.sleep(data['delay_seconds'])
+
     # Check for security phrase
     if data['passphrase'] != config.WEBHOOK_PHRASE:
         return {
@@ -312,7 +314,6 @@ def ordertesting():
             broker = i['broker']
             exchange_pair = i['exchange_pair']
             strategy = i['strategy']
-            take_profit = i['take_profit']
 
     crypto = requests.get("https://api.binance.com/api/v3/exchangeInfo?symbol=" + exchange_pair).json()
     quoteAsset = crypto['symbols'][0]['quoteAsset']
@@ -350,7 +351,7 @@ def ordertesting():
                 if strategy['order_type'] != "":
                     order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
                     # print(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
-                    # order_response = True
+                    order_response = True
                 else:
                     order_response = "This bot doesn't exist"
             else:
@@ -400,7 +401,7 @@ def ordertesting():
                 if strategy['order_type'] != "":
                     order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
                     # print(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
-                    # order_response = True
+                    order_response = True
                 else:
                     order_response = "This bot doesn't exist"
             else:
@@ -453,15 +454,19 @@ def ordercheck():
         if trading_bots[0]['has_active_deal'] == True and trading_bots[1]['has_active_deal'] == False:
             return('All good here')
         else:
-            data = {
+            binance_socket_short_closer()
+            requests.post('https://cryptocake.herokuapp.com/ordertesting', json={
                 "bot_id": "001",
                 "passphrase": "S=]ypG]:oLg2gvfFNr/a2x52j+r|J=O0p]_+6x|GgAm1h;2oegx@tUebD1q<",
-                "delay_seconds": 0,
+                "delay_seconds": 6,
                 "order_action": "buy"
-            }
-            binance_socket_short_closer()
-            requests.post('https://cryptocake.herokuapp.com/ordertesting', data=json.dumps(data))
-            # requests.post('https://localhost:5000/ordertesting', data=json.dumps(data))
+            })
+            # requests.post('http://127.0.0.1:5000/ordertesting', json={
+            #     "bot_id": "001",
+            #     "passphrase": "S=]ypG]:oLg2gvfFNr/a2x52j+r|J=O0p]_+6x|GgAm1h;2oegx@tUebD1q<",
+            #     "delay_seconds": 4,
+            #     "order_action": "buy"
+            # })
             time.sleep(3)
             trading_bots[0]['has_active_deal'] = True
             trading_bots[1]['has_active_deal'] = False
@@ -472,15 +477,19 @@ def ordercheck():
         if trading_bots[1]['has_active_deal'] == True and trading_bots[0]['has_active_deal'] == False:
             return('All good here')
         else:
-            data = {
+            binance_socket_long_closer()
+            requests.post('https://cryptocake.herokuapp.com/ordertesting', json={
                 "bot_id": "002",
                 "passphrase": "S=]ypG]:oLg2gvfFNr/a2x52j+r|J=O0p]_+6x|GgAm1h;2oegx@tUebD1q<",
-                "delay_seconds": 0,
+                "delay_seconds": 6,
                 "order_action": "sell"
-            }
-            binance_socket_long_closer()
-            requests.post('https://cryptocake.herokuapp.com/ordertesting', data=json.dumps(data))
-            # requests.post('https://localhost:5000/ordertesting', data=json.dumps(data))
+            })
+            # requests.post('http://127.0.0.1:5000/ordertesting', json={
+            #     "bot_id": "002",
+            #     "passphrase": "S=]ypG]:oLg2gvfFNr/a2x52j+r|J=O0p]_+6x|GgAm1h;2oegx@tUebD1q<",
+            #     "delay_seconds": 4,
+            #     "order_action": "sell"
+            # })
             time.sleep(3)
             trading_bots[1]['has_active_deal'] = True
             trading_bots[0]['has_active_deal'] = False
