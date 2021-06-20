@@ -427,11 +427,13 @@ def ordertesting():
 
 @app.route('/binance_close_long', methods=['POST'])
 def binance_socket_long_closer():
+    time.sleep(6)
     binance_socket_close_long()
     return("Socket Closed")
 
 @app.route('/binance_close_short', methods=['POST'])
 def binance_socket_short_closer():
+    time.sleep(6)
     binance_socket_close_short()
     return("Socket Closed")
 
