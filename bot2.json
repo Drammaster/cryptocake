@@ -1,0 +1,24 @@
+{
+    "name": "BTC Short Bot",
+    "bot_id": "002",
+    "broker": "Binance",
+    "exchange_pair": "BTCUSDT",
+    "strategy": {
+        "strategy": "short",
+        "base_order_size": 50,
+        "order_type": "MARKET"
+    },
+    "take_profit": {
+        "using": true,
+        "target_profit": 1.011,
+        "trailing_deviation": 0.995
+    },
+    "has_active_deal": false,
+    "active_orders": [
+
+    ],
+    "price": 0,
+    "tokens": 0,
+    "highest": 0,
+    "mark": false
+}

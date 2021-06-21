@@ -6,60 +6,18 @@ from binance.client import Client
 from binance.enums import *
 from binance.websockets import BinanceSocketManager
 
+bot1_file = open('bot1.json', 'r')
+bot1 = json.load(bot1_file)
+
+bot2_file = open('bot2.json', 'r')
+bot2 = json.load(bot2_file)
 
 app = Flask(__name__)
 
 
 trading_bots = [
-    {
-        'name': "BTC Long Bot",
-        'bot_id': "001",
-        'broker': "Binance",
-        'exchange_pair': "BTCUSDT",
-        'strategy': {
-            'strategy': "long",
-            'base_order_size': 50,
-            'order_type': ORDER_TYPE_MARKET
-        },
-        'take_profit': {
-            'using': True,
-            'target_profit': 1.01,
-            'trailing_deviation': 0.995
-        },
-        'has_active_deal': False,
-        'active_orders': [
-
-        ],
-        'price': 0,
-        'tokens': 0,
-        'highest': 0,
-        'mark': False
-    },
-    {
-        'name': "BTC Short Bot",
-        'bot_id': "002",
-        'broker': "Binance",
-        'exchange_pair': "BTCUSDT",
-        'crypto': 'BTC',
-        'strategy': {
-            'strategy': "short",
-            'base_order_size': 50,
-            'order_type': ORDER_TYPE_MARKET
-        },
-        'take_profit': {
-            'using': True,
-            'target_profit': 1.01,
-            'trailing_deviation': 0.995
-        },
-        'has_active_deal': False,
-        'active_orders': [
-
-        ],
-        'price': 0,
-        'tokens': 0,
-        'highest': 0,
-        'mark': False
-    },
+    bot1,
+    bot2
 ]
 
 
@@ -135,6 +93,9 @@ def binance_socket_close_long():
         # print('SELL', round(quantity - float(stepMin), stepMinSize), trading_bots[0]['exchange_pair'], ORDER_TYPE_MARKET)
         trading_bots[0]['has_active_deal'] = False
 
+        with open('bot1.json', 'w') as f:
+            json.dump(trading_bots[0], f)
+
 
 def binance_socket_start_short():
     global bm
@@ -165,6 +126,9 @@ def binance_socket_close_short():
         order_function('BUY', round(quantity - float(stepMin), stepMinSize), trading_bots[1]['exchange_pair'], ORDER_TYPE_MARKET)
         # print('BUY', round(quantity - float(stepMin), stepMinSize), trading_bots[1]['exchange_pair'], ORDER_TYPE_MARKET)
         trading_bots[1]['has_active_deal'] = False
+
+        with open('bot2.json', 'w') as f:
+            json.dump(trading_bots[1], f)
 
 # Trade API
 @app.route('/order', methods=['POST'])
@@ -351,12 +315,14 @@ def ordertesting():
                 if strategy['order_type'] != "":
                     order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
                     # print(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
-                    order_response = True
+                    # order_response = True
                 else:
                     order_response = "This bot doesn't exist"
             else:
                 order_response = "No allowance"
-
+            
+            with open('bot1.json', 'w') as f:
+                json.dump(trading_bots[0], f)
 
             if order_response == "No allowance" or order_response == "This bot doesn't exist":
                 return {
@@ -401,12 +367,14 @@ def ordertesting():
                 if strategy['order_type'] != "":
                     order_response = order_function(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
                     # print(side, round(quantity - float(stepMin), stepMinSize), exchange_pair, strategy['order_type'])
-                    order_response = True
+                    # order_response = True
                 else:
                     order_response = "This bot doesn't exist"
             else:
                 order_response = "No allowance"
 
+            with open('bot2.json', 'w') as f:
+                json.dump(trading_bots[1], f)
 
             if order_response == "No allowance" or order_response == "This bot doesn't exist":
                 return {
