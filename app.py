@@ -48,7 +48,7 @@ def process_message_trade_short(msg):
         trading_bots[1]['mark'] = True
         if socket_variable < trading_bots[1]['highest']:
             trading_bots[1]['highest'] = socket_variable
-        if socket_variable >= (float(trading_bots[1]['price']) / trading_bots[1]['take_profit']['target_profit']) / 0.997 or trading_bots[1]['highest'] / trading_bots[1]['take_profit']['trailing_deviation'] <= socket_variable:
+        if socket_variable >= float(trading_bots[1]['price']) / trading_bots[1]['take_profit']['target_profit'] or trading_bots[1]['highest'] / trading_bots[1]['take_profit']['trailing_deviation'] <= socket_variable:
             binance_socket_close_short()
             print('Entry price: ', str(trading_bots[1]['price']))
             print('Exit price: ', str(socket_variable))
