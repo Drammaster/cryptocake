@@ -23,6 +23,11 @@ body
     height: 100vh;
 }
 
+.wrapper
+{
+    overflow: hidden;
+}
+
 .caption,
 .caption-home
 {
@@ -59,7 +64,7 @@ body
 
 .services
 {
-    background-color: bisque;
+    background-color: rgb(219, 219, 219);
     position: relative;
     width: 100%;
     height: 100vh;
@@ -74,7 +79,7 @@ body
 
 .contact-us
 {
-    background-color: bisque;
+    background-color: rgb(219, 219, 219);
     position: relative;
     width: 100%;
     height: 100vh;

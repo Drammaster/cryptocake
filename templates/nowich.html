@@ -6,18 +6,18 @@
 <!--Bootstrap link-->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
+<!--Font awesome-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 <!--Custom Css-->
 <link rel="stylesheet" type="text/css" href="../../static/css/nowich.css">
 </head>
 <header>
-    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar wrapper fixed-top navbar-expand-lg navbar-dark bg-dark">
         <!--Logo--> 
-        <a class="navbar-brand" href="#">Nowich Digital</a>
+        <a class="navbar-brand" href="#home">Nowich Digital</a>
         
-        <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="#home">Home <span class="sr-only">(current)</span></a>
-            </li>
+        <ul class="navbar-nav" id="nav-links">
             <li class="nav-item">
                 <a class="nav-link" href="#about-us">About Us</a>
             </li>
@@ -31,6 +31,10 @@
                 <a class="nav-link" href="#contact-us">Contact Us</a>
             </li>
         </ul>
+
+        <a href="javascript:void(0);" class="icon" onclick="myNav()">
+            <i class="fa fa-bars"></i>
+        </a>
 
     </nav>
 </header>
@@ -61,5 +65,15 @@
             <span class="border">CONTACT US</span><br>
         </div>
     </div>
+    <script>
+        function myNav() {
+            var x = document.getElementById("nav-links");
+            if (x.style.display === "block") {
+                x.style.display = "none";
+            } else {
+                x.style.display = "block";
+            }
+        }
+    </script>
 </body>
 </html>
