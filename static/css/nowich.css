@@ -1,0 +1,81 @@
+html
+{
+    scroll-behavior: smooth;
+}
+
+body
+{
+    height: 100%;
+    margin: 0;
+    font: 400 15px/1.8 "Lato", sans-serif;
+    color: #777;
+}
+
+.home
+{
+    position: relative;
+    opacity: 0.65;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-image: url('../images/tfK963.jpg');
+    width: 100%;
+    height: 100vh;
+}
+
+.caption,
+.caption-home
+{
+    opacity: 1;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    text-align: center;
+    color: #000;
+}
+
+.caption
+{
+    top: 15%;
+}
+
+.caption span.border,
+.caption-home span.border
+ {
+    background-color: #111;
+    color: #fff;
+    padding: 18px;
+    font-size: 25px;
+    letter-spacing: 10px;
+}
+
+.about-us
+{
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}
+
+.services
+{
+    background-color: bisque;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}
+
+.clients
+{
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}
+
+.contact-us
+{
+    background-color: bisque;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}

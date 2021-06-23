@@ -481,7 +481,7 @@ def bots2():
 def welcome():
     balances = client.get_account()['balances']
 
-    return render_template('index.html', balances=balances)
+    return render_template('index.html', balances=balances, trading_bots=trading_bots)
 
 
 @app.route('/moon')
@@ -495,3 +495,7 @@ def product_card():
 @app.route('/svg_animate')
 def svg_animate():
     return render_template('svg_animate.html')
+
+@app.route('/nowich')
+def nowich():
+    return render_template('nowich.html')
