@@ -84,3 +84,25 @@ body
     width: 100%;
     height: 100vh;
 }
+
+.icon
+{
+    display: none;
+}
+
+.content
+{
+    display: grid;
+}
+
+@media only screen and (max-width: 1050px) {
+    .icon
+    {
+        display: initial;
+    }
+
+    #nav-links
+    {
+        display: none;
+    }
+}
