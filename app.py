@@ -16,8 +16,48 @@ app = Flask(__name__)
 
 
 trading_bots = [
-    bot1,
-    bot2
+    {
+        "name": "BTC Long Bot",
+        "bot_id": "001",
+        "broker":"Binance",
+        "exchange_pair": "BTCUSDT",
+        "strategy": {
+            "strategy": "long",
+            "base_order_size": 50,
+            "order_type": "MARKET"
+        },
+        "take_profit": {
+            "using": True,
+            "target_profit": 1.011,
+            "trailing_deviation": 0.995
+        },
+        "has_active_deal": False,
+        "price": 0,
+        "tokens": 0,
+        "highest": 0,
+        "mark": False
+    },
+    {
+        "name": "BTC Short Bot",
+        "bot_id": "002",
+        "broker": "Binance",
+        "exchange_pair": "BTCUSDT",
+        "strategy": {
+            "strategy": "short",
+            "base_order_size": 50,
+            "order_type": "MARKET"
+        },
+        "take_profit": {
+            "using": True,
+            "target_profit": 1.011,
+            "trailing_deviation": 0.995
+        },
+        "has_active_deal": False,
+        "price": 0,
+        "tokens": 0,
+        "highest": 0,
+        "mark": False
+    }
 ]
 
 
