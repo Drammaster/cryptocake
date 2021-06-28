@@ -124,11 +124,15 @@ body
     opacity: 0.7;
 }
 
-.what-we-offer {
-    margin-top: 20%;
-    margin: auto;
+.content {
+    position: relative;
+    top: 30%;
     width: 50%;
-    padding: 10px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.what-we-offer {
     display: grid;
     grid-template-columns: repeat(3, 300px);
     grid-template-rows: auto;
