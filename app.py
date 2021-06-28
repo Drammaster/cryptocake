@@ -517,25 +517,25 @@ def bots2():
 
 
 # Home page
+# @app.route('/')
+# def welcome():
+#     balances = client.get_account()['balances']
+
+#     return render_template('index.html', balances=balances, trading_bots=trading_bots)
+
+
+# @app.route('/moon')
+# def moon():
+#     return render_template('moon.html')
+
+# @app.route('/product_card')
+# def product_card():
+#     return render_template('product_card.html')
+
+# @app.route('/svg_animate')
+# def svg_animate():
+#     return render_template('svg_animate.html')
+
 @app.route('/')
-def welcome():
-    balances = client.get_account()['balances']
-
-    return render_template('index.html', balances=balances, trading_bots=trading_bots)
-
-
-@app.route('/moon')
-def moon():
-    return render_template('moon.html')
-
-@app.route('/product_card')
-def product_card():
-    return render_template('product_card.html')
-
-@app.route('/svg_animate')
-def svg_animate():
-    return render_template('svg_animate.html')
-
-@app.route('/nowich')
 def nowich():
     return render_template('nowich.html')
