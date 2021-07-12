@@ -11,6 +11,7 @@
 
 <!--Custom Css-->
 <link rel="stylesheet" type="text/css" href="../../static/css/nowich.css">
+
 </head>
 <header>
     <nav class="navbar wrapper fixed-top navbar-expand-lg navbar-dark bg-dark">
@@ -66,36 +67,32 @@
         <div class="caption">
             <span class="border">WHAT WE OFFER</span><br>
         </div>
+
         <div class="what-we-offer">
             <div class="card">
-                <!--<img src="jeans3.jpg" alt="Denim Jeans" style="width:100%">-->
                 <h1>Web Development</h1>
                 <p>Some text about the Web Development..</p>
-                <p><button>Learn more</button></p>
+                <p><button type="button" data-toggle="modal" data-target="#exampleModal">Learn more</button></p>
             </div>
             <div class="card">
-                <!--<img src="jeans3.jpg" alt="Denim Jeans" style="width:100%">-->
                 <h1>Google Adwords</h1>
                 <p>Some text about the Google Adwords..</p>
-                <p><button>Learn more</button></p>
+                <p><button type="button" data-toggle="modal" data-target="#exampleModal">Learn more</button></p>
             </div>
             <div class="card">
-                <!--<img src="jeans3.jpg" alt="Denim Jeans" style="width:100%">-->
                 <h1>Social Media Marketing</h1>
                 <p>Some text about the jeans..</p>
-                <p><button>Learn more</button></p>
+                <p><button type="button" data-toggle="modal" data-target="#exampleModal">Learn more</button></p>
             </div>
             <div class="card">
-                <!--<img src="jeans3.jpg" alt="Denim Jeans" style="width:100%">-->
                 <h1>Remarketing Campaigns</h1>
                 <p>Some text about the Remarketing Campaigns..</p>
-                <p><button>Learn more</button></p>
+                <p><button type="button" data-toggle="modal" data-target="#exampleModal">Learn more</button></p>
             </div>
             <div class="card">
-                <!--<img src="jeans3.jpg" alt="Denim Jeans" style="width:100%">-->
                 <h1>Search Engine Optimisation</h1>
                 <p>Some text about the Search Engine Optimisation..</p>
-                <p><button>Learn more</button></p>
+                <p><button type="button" data-toggle="modal" data-target="#exampleModal">Learn more</button></p>
             </div>
         </div>
     </div>
@@ -127,13 +124,33 @@
                         <label class="contact-labels" for="email">Email</label>
                         <input class="contact-inputs-left" type="email" name="Email" placeholder="john.smith@gmail.com" />
                         <br>
-                        <label class="contact-labels" for="comments">Comments</label>
+                        <label class="contact-labels" for="comments">Message</label>
                         <br>
                         <textarea cols="46" rows="3" name="Comments"></textarea>
                         <br>
                         <input class="btn btn-submit" type="submit" value="Submit" />
                     </form> 
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
             </div>
         </div>
     </div>
@@ -148,5 +165,8 @@
             }
         }
     </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </body>
 </html>

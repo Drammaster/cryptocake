@@ -23,6 +23,16 @@ body
     height: 100vh;
 }
 
+.navbar {
+    display: block;
+}
+
+#nav-links {
+    justify-content: center;
+    font-size: larger;
+    font-weight: bold;
+}
+
 .wrapper
 {
     overflow: hidden;
@@ -163,5 +173,9 @@ body
     #nav-links
     {
         display: none;
+    }
+
+    .contact {
+        width: 90%;
     }
 }
