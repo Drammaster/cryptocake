@@ -17,17 +17,17 @@ app = Flask(__name__)
 
 trading_bots = [
     {
-        "name": "BTC Long Bot",
+        "name": "CAKE Long Bot",
         "bot_id": "001",
         "broker":"Binance",
-        "exchange_pair": "BTCUSDT",
+        "exchange_pair": "CAKEUSDT",
         "strategy": {
             "strategy": "long",
             "base_order_size": 50,
             "order_type": "MARKET"
         },
         "take_profit": {
-            "using": True,
+            "using": False,
             "target_profit": 1.011,
             "trailing_deviation": 0.995
         },
@@ -38,10 +38,10 @@ trading_bots = [
         "mark": False
     },
     {
-        "name": "BTC Short Bot",
+        "name": "CAKE Short Bot",
         "bot_id": "002",
         "broker": "Binance",
-        "exchange_pair": "BTCUSDT",
+        "exchange_pair": "CAKEUSDT",
         "strategy": {
             "strategy": "short",
             "base_order_size": 50,
@@ -49,8 +49,8 @@ trading_bots = [
         },
         "take_profit": {
             "using": True,
-            "target_profit": 1.011,
-            "trailing_deviation": 0.995
+            "target_profit": 1.013,
+            "trailing_deviation": 1
         },
         "has_active_deal": False,
         "price": 0,
@@ -343,7 +343,8 @@ def ordertesting():
                 trading_bots[0]['price'] = price['price']
                 
                 trading_bots[0]['has_active_deal'] = True
-                binance_socket_start_long()
+                if trading_bots[0]["take_profit"]["using"]:
+                    binance_socket_start_long()
         
             step = client.get_symbol_info(exchange_pair)
             stepMin = step['filters'][2]['stepSize']
@@ -395,7 +396,8 @@ def ordertesting():
                 trading_bots[1]['price'] = price['price']
 
                 trading_bots[1]['has_active_deal'] = True
-                binance_socket_start_short()
+                if trading_bots[1]["take_profit"]["using"]:
+                    binance_socket_start_short()
         
             step = client.get_symbol_info(exchange_pair)
             stepMin = step['filters'][2]['stepSize']
