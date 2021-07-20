@@ -160,6 +160,10 @@ body
     margin-right: auto;
 }
 
+#call {
+    vertical-align: baseline;
+}
+
 .what-we-offer {
     position: relative;
     top: 20%;

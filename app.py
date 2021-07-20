@@ -517,6 +517,13 @@ def bots1():
 def bots2():
     return(trading_bots[1])
 
+@app.route('/binance_futures_long', methods=['POST'])
+def binance_futures_long():
+    # Load data from post
+    # data = json.loads(request.data)
+
+    return(client.futures_account())
+
 
 # Home page
 # @app.route('/')
