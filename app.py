@@ -538,25 +538,13 @@ def binance_futures_trade():
         takeProfit = float(data['close']) + ((float(data['close']) * 0.1) / 75)
         takeProfit = round(takeProfit, 2)
 
-        stopLoss = float(data['close']) - ((float(data['close']) * 0.2) / 75)
-        stopLoss = round(stopLoss, 2)
-
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=1, isolated=False)
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_STOP_MARKET, quantity=1, positionSide='LONG', stopPrice=stopLoss, timeInForce=TIME_IN_FORCE_GTC)
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_TAKE_PROFIT_MARKET, quantity=1, positionSide='LONG', stopPrice=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_TAKE_PROFIT_MARKET, quantity=10, positionSide='LONG', stopPrice=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
     
     if data['side'] == 'SHORT':
-        takeProfit = float(data['close']) - ((float(data['close']) * 0.1) / 75)
-        takeProfit = round(takeProfit, 2)
-
-        stopLoss = float(data['close']) + ((float(data['close']) * 0.2) / 75)
-        stopLoss = round(stopLoss, 2)
-
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=1, isolated=False)
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, type=FUTURE_ORDER_TYPE_STOP_MARKET, quantity=1, positionSide='SHORT', stopPrice=stopLoss, timeInForce=TIME_IN_FORCE_GTC)
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, type=FUTURE_ORDER_TYPE_TAKE_PROFIT_MARKET, quantity=1, positionSide='SHORT', stopPrice=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
-    
-    return(str(takeProfit) + str(stopLoss))
+        client.futures_cancel_all_open_orders(symbol="BNBUSDT")
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
+    return()
 
 
 # Home page
