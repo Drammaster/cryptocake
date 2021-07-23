@@ -62,7 +62,7 @@ trading_bots = [
 
 
 #Binance
-client = Client(config.API_KEY, config.API_SECRET)
+client = Client(config.API_KEY2, config.API_SECRET2)
 
 
 def process_message_trade_long(msg):
@@ -517,12 +517,46 @@ def bots1():
 def bots2():
     return(trading_bots[1])
 
-@app.route('/binance_futures_long', methods=['POST'])
+@app.route('/binance_futures_BNBUSDT', methods=['POST'])
 def binance_futures_long():
     # Load data from post
     # data = json.loads(request.data)
 
-    return(client.futures_account())
+    client.futures_change_leverage(symbol="BNBUSDT", leverage=75)
+    client.futures_change_margin_type(symbol="BNBUSDT", marginType='CROSSED')
+
+    for i in client.futures_account()['positions']:
+        if i['symbol'] == "BNBUSDT":
+            return(i)
+
+@app.route('/binance_futures_trade', methods=['POST'])
+def binance_futures_trade():
+    # Load data from post
+    data = json.loads(request.data)
+
+    if data['side'] == 'LONG':
+        takeProfit = float(data['close']) + ((float(data['close']) * 0.1) / 75)
+        takeProfit = round(takeProfit, 2)
+
+        stopLoss = float(data['close']) - ((float(data['close']) * 0.2) / 75)
+        stopLoss = round(stopLoss, 2)
+
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=1, isolated=False)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_STOP_MARKET, quantity=1, positionSide='LONG', stopPrice=stopLoss, timeInForce=TIME_IN_FORCE_GTC)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_TAKE_PROFIT_MARKET, quantity=1, positionSide='LONG', stopPrice=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+    
+    if data['side'] == 'SHORT':
+        takeProfit = float(data['close']) - ((float(data['close']) * 0.1) / 75)
+        takeProfit = round(takeProfit, 2)
+
+        stopLoss = float(data['close']) + ((float(data['close']) * 0.2) / 75)
+        stopLoss = round(stopLoss, 2)
+
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=1, isolated=False)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, type=FUTURE_ORDER_TYPE_STOP_MARKET, quantity=1, positionSide='SHORT', stopPrice=stopLoss, timeInForce=TIME_IN_FORCE_GTC)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, type=FUTURE_ORDER_TYPE_TAKE_PROFIT_MARKET, quantity=1, positionSide='SHORT', stopPrice=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+    
+    return(str(takeProfit) + str(stopLoss))
 
 
 # Home page
