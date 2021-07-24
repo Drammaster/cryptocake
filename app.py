@@ -539,7 +539,7 @@ def binance_futures_trade():
         takeProfit = round(takeProfit, 2)
 
         client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=10, positionSide='LONG', stopPrice=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=10, positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
     
     if data['side'] == 'SHORT':
         client.futures_cancel_all_open_orders(symbol="BNBUSDT")
