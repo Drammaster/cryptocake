@@ -538,26 +538,13 @@ def binance_futures_trade():
         takeProfit = float(data['close']) + ((float(data['close']) * 0.11) / 75)
         takeProfit = round(takeProfit, 2)
 
-        client.futures_cancel_all_open_orders(symbol="BNBUSDT")
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
-
-        time.sleep(1)
-
         client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
         client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=10, positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
     
     elif data['side'] == 'SHORT':
-        takeProfit = float(data['close']) + ((float(data['close']) * 0.11) / 75)
-        takeProfit = round(takeProfit, 2)
-
         client.futures_cancel_all_open_orders(symbol="BNBUSDT")
         client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
 
-        time.sleep(1)
-
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
-        client.futures_create_order(symbol="BNBUSDT", side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=10, positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
-        
     return("Done")
 
 
