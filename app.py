@@ -535,7 +535,7 @@ def binance_futures_trade():
     data = json.loads(request.data)
 
     if data['side'] == 'LONG':
-        takeProfit = float(data['close']) + ((float(data['close']) * 0.11) / 75)
+        takeProfit = float(data['close']) + ((float(data['close']) * 0.10) / 75)
         takeProfit = round(takeProfit, 2)
 
         client.futures_create_order(symbol="BNBUSDT", side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=10, isolated=False)
