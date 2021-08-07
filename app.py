@@ -1,13 +1,24 @@
 import json, config
+import urllib.parse
+import hashlib
+import hmac
+import base64
 import time
 import requests
+
 from flask import Flask, request, render_template
+
 from binance.client import Client
 from binance.enums import *
 from binance.websockets import BinanceSocketManager
 
+from kucoin.client import Client as Kucoin
+
 app = Flask(__name__)
 
+kraken_bots = [
+
+]
 
 trading_bots = [
     {
@@ -97,8 +108,32 @@ trading_bots = [
 ]
 
 
+#Kraken
+kraken_api_url = "https://api.kraken.com"
+kraken_api_key = config.KRAKEN_API_KEY
+kraken_api_sec = config.KRAKEN_API_SECRET
+
 #Binance
 client = Client(config.API_KEY2, config.API_SECRET2)
+
+kucoin_client = Kucoin(config.KUCOIN_API_KEY, config.KUCOIN_API_SECRET, config.KUCOIN_PASSPHRASE)
+
+def get_kraken_signature(urlpath, data, secret):
+    postdata = urllib.parse.urlencode(data)
+    encoded = (str(data['nonce']) + postdata).encode()
+    message = urlpath.encode() + hashlib.sha256(encoded).digest()
+
+    mac = hmac.new(base64.b64decode(secret), message, hashlib.sha512)
+    sigdigest = base64.b64encode(mac.digest())
+    return sigdigest.decode()
+
+def kraken_request(uri_path, data, kraken_api_key, kraken_api_sec):
+    headers = {}
+    headers['API-Key'] = kraken_api_key
+    # get_kraken_signature() as defined in the 'Authentication' section
+    headers['API-Sign'] = get_kraken_signature(uri_path, data, kraken_api_sec)             
+    req = requests.post((kraken_api_url + uri_path), headers=headers, data=data)
+    return req
 
 
 def process_message_trade_long(msg):
@@ -471,13 +506,35 @@ def ordertesting():
 
 @app.route('/binance_close_long', methods=['POST'])
 def binance_socket_long_closer():
+    # Load data from post
+    data = json.loads(request.data)
+
     time.sleep(6)
+
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+
     binance_socket_close_long()
     return("Socket Closed")
 
 @app.route('/binance_close_short', methods=['POST'])
 def binance_socket_short_closer():
+    # Load data from post
+    data = json.loads(request.data)
+
     time.sleep(6)
+
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+
     binance_socket_close_short()
     return("Socket Closed")
 
@@ -568,6 +625,13 @@ def binance_futures_trade():
     # Load data from post
     data = json.loads(request.data)
 
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+
     if data['side'] == 'LONG':
         takeProfit = float(data['close']) + ((float(data['close']) * 0.10) / 75)
         takeProfit = round(takeProfit, 2)
@@ -581,6 +645,66 @@ def binance_futures_trade():
 
     return("Done")
 
+
+@app.route('/kraken_trade', methods=['POST'])
+def kraken_trade():
+    # Load data from post
+    data = json.loads(request.data)
+
+    time.sleep(data['delay_seconds'])
+
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+
+    # Construct the request and print the result
+    resp = kraken_request('/0/private/AddOrder', {
+        "nonce": str(int(1000*time.time())),
+        "ordertype": "market",
+        "type": "buy",
+        "volume": 1.25,
+        "pair": "MINAUSD"
+    }, kraken_api_key, kraken_api_sec)
+
+    print(resp)
+    return(resp)
+
+
+@app.route('/kucoin_trade', methods=['POST'])
+def kucoin_trade():
+    # Load data from post
+    data = json.loads(request.data)
+
+    time.sleep(data['delay_seconds'])
+
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+
+    if "SELL" == data["side"]:
+        selling_amount = kucoin_client.get_account("610def8ee962a10006593007")
+        selling_amount = float(round(float(selling_amount['balance']) - 0.1, 2))
+        print(selling_amount)
+        order = kucoin_client.create_market_order('ALPACA-USDT', Client.SIDE_SELL, size=selling_amount)
+
+        print(order)
+        return(order)
+
+    if "BUY" == data["side"]:
+        buying_amount = kucoin_client.get_account("610de221724a380006d7d795")
+        price = kucoin_client.get_ticker(symbol="ALPACA-USDT")
+        buying_amount = float(round(float(buying_amount['balance']) - 1, 2))
+        print(buying_amount)
+        order = kucoin_client.create_market_order('ALPACA-USDT', Client.SIDE_BUY, funds=buying_amount)
+
+        print(order)
+        return(order)
 
 # Home page
 # @app.route('/')
