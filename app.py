@@ -11,6 +11,7 @@ from flask import Flask, request, render_template
 from binance.client import Client
 from binance.enums import *
 from binance.streams import BinanceSocketManager
+# from binance.websockets import BinanceSocketManager
 
 from kucoin.client import Client as Kucoin
 
@@ -114,7 +115,7 @@ kraken_api_key = config.KRAKEN_API_KEY
 kraken_api_sec = config.KRAKEN_API_SECRET
 
 #Binance
-client = Client(config.API_KEY2, config.API_SECRET2)
+client = Client(config.API_KEY, config.API_SECRET)
 
 kucoin_client = Kucoin(config.KUCOIN_API_KEY, config.KUCOIN_API_SECRET, config.KUCOIN_PASSPHRASE)
 
@@ -660,17 +661,55 @@ def kraken_trade():
             "message": "Nice try, invalid passphrase"
         }
 
-    # Construct the request and print the result
-    resp = kraken_request('/0/private/AddOrder', {
-        "nonce": str(int(1000*time.time())),
-        "ordertype": "market",
-        "type": "buy",
-        "volume": 1.25,
-        "pair": "MINAUSD"
+    # Request user balances
+    user_balance = kraken_request('/0/private/Balance', {
+        "nonce": str(int(1000*time.time()))
     }, kraken_api_key, kraken_api_sec)
 
-    print(resp)
-    return(resp)
+    if data['side'] == "SELL":
+        vol = user_balance.json()['result']['MINA']
+        resp = kraken_request('/0/private/AddOrder', {
+            "nonce": str(int(1000*time.time())),
+            "ordertype": "market",
+            "type": "sell",
+            "volume": vol,
+            "pair": "MINAUSD"
+        }, kraken_api_key, kraken_api_sec)
+
+    if data['side'] == "BUY":
+        vol = float(user_balance.json()['result']['ZUSD']) / data['close'] - 1
+        resp = kraken_request('/0/private/AddOrder', {
+            "nonce": str(int(1000*time.time())),
+            "ordertype": "market",
+            "type": "buy",
+            "volume": vol,
+            "pair": "MINAUSD"
+        }, kraken_api_key, kraken_api_sec)    
+
+    print(resp.json())
+    return(resp.json())
+
+@app.route('/kraken_account', methods=['POST'])
+def kraken_account():
+    # Load data from post
+    data = json.loads(request.data)
+
+    time.sleep(data['delay_seconds'])
+
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
+    
+    resp = kraken_request('/0/private/Balance', {
+        "nonce": str(int(1000*time.time()))
+    }, kraken_api_key, kraken_api_sec)
+
+    print(resp.json()) 
+    return(resp.json())
+
 
 
 @app.route('/kucoin_trade', methods=['POST'])
