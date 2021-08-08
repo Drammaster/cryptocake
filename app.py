@@ -10,7 +10,7 @@ from flask import Flask, request, render_template
 
 from binance.client import Client
 from binance.enums import *
-from binance.websockets import BinanceSocketManager
+from binance.streams import BinanceSocketManager
 
 from kucoin.client import Client as Kucoin
 
