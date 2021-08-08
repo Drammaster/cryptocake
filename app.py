@@ -677,7 +677,7 @@ def kraken_trade():
         }, kraken_api_key, kraken_api_sec)
 
     if data['side'] == "BUY":
-        vol = float(user_balance.json()['result']['ZUSD']) / data['close'] - 1
+        vol = float(user_balance.json()['result']['ZUSD']) / float(data['close']) - 1
         resp = kraken_request('/0/private/AddOrder', {
             "nonce": str(int(1000*time.time())),
             "ordertype": "market",
