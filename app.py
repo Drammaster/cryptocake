@@ -10,8 +10,8 @@ from flask import Flask, request, render_template
 
 from binance.client import Client
 from binance.enums import *
-from binance.streams import BinanceSocketManager
-# from binance.websockets import BinanceSocketManager
+# from binance.streams import BinanceSocketManager
+from binance.websockets import BinanceSocketManager
 
 from kucoin.client import Client as Kucoin
 
@@ -413,8 +413,8 @@ def ordertesting():
                 trading_bots[0]['price'] = price['price']
                 
                 trading_bots[0]['has_active_deal'] = True
-                if trading_bots[0]["take_profit"]["using"]:
-                    binance_socket_start_long()
+                # if trading_bots[0]["take_profit"]["using"]:
+                    # binance_socket_start_long()
         
             step = client.get_symbol_info(exchange_pair)
             stepMin = step['filters'][2]['stepSize']
@@ -466,8 +466,8 @@ def ordertesting():
                 trading_bots[1]['price'] = price['price']
 
                 trading_bots[1]['has_active_deal'] = True
-                if trading_bots[1]["take_profit"]["using"]:
-                    binance_socket_start_short()
+                # if trading_bots[1]["take_profit"]["using"]:
+                    # binance_socket_start_short()
         
             step = client.get_symbol_info(exchange_pair)
             stepMin = step['filters'][2]['stepSize']
