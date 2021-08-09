@@ -10,8 +10,8 @@ from flask import Flask, request, render_template
 
 from binance.client import Client
 from binance.enums import *
-# from binance.streams import BinanceSocketManager
-from binance.websockets import BinanceSocketManager
+from binance.streams import BinanceSocketManager
+# from binance.websockets import BinanceSocketManager
 
 from kucoin.client import Client as Kucoin
 
@@ -29,7 +29,7 @@ trading_bots = [
         "exchange_pair": "CAKEUSDT",
         "strategy": {
             "strategy": "long",
-            "base_order_size": 50,
+            "base_order_size": 100,
             "order_type": "MARKET"
         },
         "take_profit": {
@@ -50,7 +50,7 @@ trading_bots = [
         "exchange_pair": "CAKEUSDT",
         "strategy": {
             "strategy": "short",
-            "base_order_size": 50,
+            "base_order_size": 100,
             "order_type": "MARKET"
         },
         "take_profit": {
