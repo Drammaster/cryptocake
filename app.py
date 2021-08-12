@@ -577,17 +577,17 @@ def binance_futures_trade():
     elif data['side'] == 'SHORT':
         if data['action'] == "OPEN":
             if data['using_roe'] == True:
-                takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
+                takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
             else:
-                takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+                takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
             takeProfit = round(takeProfit, 2)
 
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
         
         if data['action'] == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
 
     return("Done")
 
