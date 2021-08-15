@@ -10,106 +10,15 @@ from flask import Flask, request, render_template
 
 from binance.client import Client
 from binance.enums import *
-from binance.streams import BinanceSocketManager
-# from binance.websockets import BinanceSocketManager
+# from binance.streams import BinanceSocketManager
+from binance.websockets import BinanceSocketManager
 
-import config
-# import old_config as config
+# import config
+import old_config as config
 
 from kucoin.client import Client as Kucoin
 
 app = Flask(__name__)
-
-kraken_bots = [
-
-]
-
-trading_bots = [
-    {
-        "name": "CAKE Long Bot",
-        "bot_id": "001",
-        "broker":"Binance",
-        "exchange_pair": "CAKEUSDT",
-        "strategy": {
-            "strategy": "long",
-            "base_order_size": 100,
-            "order_type": "MARKET"
-        },
-        "take_profit": {
-            "using": True,
-            "target_profit": 2.0,
-            "trailing_deviation": 0.0
-        },
-        "has_active_deal": False,
-        "price": 0,
-        "tokens": 0,
-        "highest": 0,
-        "mark": False
-    },
-    {
-        "name": "CAKE Short Bot",
-        "bot_id": "002",
-        "broker": "Binance",
-        "exchange_pair": "CAKEUSDT",
-        "strategy": {
-            "strategy": "short",
-            "base_order_size": 100,
-            "order_type": "MARKET"
-        },
-        "take_profit": {
-            "using": False,
-            "target_profit": 1.013,
-            "trailing_deviation": 1
-        },
-        "has_active_deal": False,
-        "price": 0,
-        "tokens": 0,
-        "highest": 0,
-        "mark": False
-    },
-    {
-        "name": "CAKE Long Bot",
-        "bot_id": "003",
-        "broker":"Binance",
-        "exchange_pair": "BNBBUSD",
-        "strategy": {
-            "strategy": "long",
-            "base_order_size": 50,
-            "order_type": "MARKET"
-        },
-        "take_profit": {
-            "using": False,
-            "target_profit": 1.011,
-            "trailing_deviation": 0.995
-        },
-        "has_active_deal": False,
-        "price": 0,
-        "tokens": 0,
-        "highest": 0,
-        "mark": False
-    },
-    {
-        "name": "BNB Long Bot",
-        "bot_id": "004",
-        "broker":"Binance",
-        "exchange_pair": "BNBBUSD",
-        "strategy": {
-            "strategy": "long",
-            "base_order_size": 50,
-            "order_type": "MARKET"
-        },
-        "take_profit": {
-            "using": False,
-            "target_profit": 1.011,
-            "trailing_deviation": 0.995
-        },
-        "has_active_deal": False,
-        "price": 0,
-        "tokens": 0,
-        "highest": 0,
-        "mark": False
-    }
-]
 
 
 #Kraken
@@ -173,7 +82,7 @@ def process_message_trade_short(msg):
 
 
 # Live trading function
-def order_function(side, quantity, symbol, order_type):
+def order_function_market(side, quantity, symbol, order_type):
     try:
         print(f"sending order {order_type} - {side} {quantity} {symbol}")
         order = client.create_order(symbol=symbol, side=side, type=order_type, quantity=quantity)
@@ -183,6 +92,15 @@ def order_function(side, quantity, symbol, order_type):
 
     return order
 
+def order_function_limit(side, quantity, symbol, order_type, price):
+    try:
+        print(f"sending order {order_type} - {side} {quantity} {symbol} at {price}")
+        order = client.create_order(symbol=symbol, side=side, type=order_type, quantity=quantity, price=price, timeInForce=TIME_IN_FORCE_GTC)
+    except Exception as e:
+        print("an exception occured - {}".format(e))
+        return False
+
+    return order
 
 def binance_socket_start_long():
     global bm
@@ -245,14 +163,6 @@ def binance_socket_close_short():
         with open('bot2.json', 'w') as f:
             json.dump(trading_bots[1], f)
 
-def binance_place_order():
-    pass
-
-def kraken_place_order():
-    pass
-
-def kucoin_place_order():
-    pass
 
 # Trade API
 @app.route('/order', methods=['POST'])
@@ -269,14 +179,148 @@ def order():
             "message": "Nice try, invalid passphrase"
         }
 
-    if data['platform'] == "Binance":
-        pass
-    
-    if data['platform'] == "Kraken":
-        pass
+    # Binance Spot Trade
+    if data['platform'].upper() == "BINANCE":
 
-    if data['platform'] == "Kucoin":
-        pass
+        # Get exchange information from binance
+        crypto = requests.get("https://api.binance.com/api/v3/exchangeInfo?symbol=" + data['exchange_pair']).json()
+        quoteAsset = crypto['symbols'][0]['quoteAsset']
+        baseAsset = crypto['symbols'][0]['baseAsset']
+
+        # Long trade
+        if data['side'].upper() == 'LONG':
+            assets = client.get_asset_balance(asset=quoteAsset)
+            price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['exchange_pair']).json()
+
+            quantity = float((float(assets['free']) / float(price['price']))*0.9995)
+
+            if data['amount_type'].upper() == "PERCENTAGE":
+                quantity = quantity * (data['amount'] / 100)
+
+            if data['amount_type'].upper() == "BASE CURRENCY":
+                quantity = float(data['amount'] / float(price['price']))*0.9995
+            
+            if data['amount_type'].upper() == "CONTRACTS":
+                if quantity > data['amount']:
+                    quantity = data['amount']
+
+            step = client.get_symbol_info(data['exchange_pair'])
+            stepMin = step['filters'][2]['stepSize']
+            stepMinSize = 8 - stepMin[::-1].find('1')
+       
+        # Short trade
+        if data['side'].upper() == 'SHORT':
+            assets = client.get_asset_balance(asset=baseAsset)
+            price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['exchange_pair']).json()
+
+            quantity = float(assets['free'])
+
+            step = client.get_symbol_info(data['exchange_pair'])
+            stepMin = step['filters'][2]['stepSize']
+            stepMinSize = 8 - stepMin[::-1].find('1')
+
+        if quantity > 0:
+            if data['order_type'].upper() == "MARKET":
+                order_response = order_function_market(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
+            if data['order_type'].upper() == "LIMIT":
+                order_response = order_function_limit(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['price']))
+        else:
+            order_response = "Nothing to trade"
+        
+
+        if order_response == "Nothing to trade":
+            return {
+                "code": "error",
+                "message": order_response
+            }
+        elif order_response:
+            return {
+                "code": "success",
+                "message": "order executed"
+            }
+        else:
+            return {
+                "code": "error",
+                "message": order_response
+            }
+
+    # Kraken Spot Trade
+    if data['platform'].upper() == "KRAKEN":
+        # Request user balances
+        user_balance = kraken_request('/0/private/Balance', {
+            "nonce": str(int(1000*time.time()))
+        }, kraken_api_key, kraken_api_sec)
+
+        pair_info = requests.get('https://api.kraken.com/0/public/AssetPairs?pair=' + data['exchange_pair'])
+        quoteAsset = pair_info.json()['result'][data['exchange_pair']]['quote']
+        baseAsset = pair_info.json()['result'][data['exchange_pair']]['base']
+
+        
+        if data['side'].upper() == "LONG":
+            quantity = user_balance.json()['result'][quoteAsset]
+
+            if data['amount_type'].upper() == "PERCENTAGE":
+                quantity = (float(quantity) * (data['amount'] / 100)) / float(data['close'])
+
+            if data['amount_type'].upper() == "BASE CURRENCY":
+                quantity = float(data['amount'] / float(data['close'])) - 1
+            
+            if data['amount_type'].upper() == "CONTRACTS":
+                if float(quantity) > data['amount']:
+                    quantity = data['amount']
+
+
+        if data['side'].upper() == "SHORT":
+            quantity = user_balance.json()['result'][baseAsset]
+
+
+        resp = kraken_request('/0/private/AddOrder', {
+            "nonce": str(int(1000*time.time())),
+            "ordertype": data['order_type'].lower(),
+            "type": data['action'].lower(),
+            "volume": quantity,
+            "pair": data['exchange_pair'],
+            "price": float(data['price'])
+        }, kraken_api_key, kraken_api_sec)
+
+        print(resp.json())
+        return(resp.json())
+
+        
+    # Kucoin Spot Trade
+    if data['platform'].upper() == "KUCOIN":
+        # Get account balances
+        user_account = kucoin_client.get_accounts()
+
+        baseAsset = ""
+        quoteAsset = ""
+
+        # Assign IDs to trade
+        for i in user_account:
+            print(i)
+            if i['currency'] == data['exchange_pair'].split('-')[0] and i['type'] == "trade":
+                print(data['exchange_pair'].split('-')[0])
+                
+                baseAsset = i['id']
+            elif i['currency'] == data['exchange_pair'].split('-')[1] and i['type'] == "trade":
+                quoteAsset = i['id']
+        
+        if data['side'].upper() == "LONG":
+            buying_amount = kucoin_client.get_account(quoteAsset)
+            price = kucoin_client.get_ticker(symbol=data['exchange_pair'])
+            buying_amount = float(round(float(buying_amount['balance']) - 1, 2))
+            print(buying_amount)
+            order = kucoin_client.create_market_order(data['exchange_pair'], Client.SIDE_BUY, funds=buying_amount)
+
+        if data['side'].upper() == "SHORT":
+            selling_amount = kucoin_client.get_account(baseAsset)
+            selling_amount = float(round(float(selling_amount['balance']) - 0.1, 2))
+            print(selling_amount)
+            order = kucoin_client.create_market_order(data['exchange_pair'], Client.SIDE_SELL, size=selling_amount)
+
+        print(order)
+        return(order)
+            
 
     
 
@@ -512,14 +556,14 @@ def ordercheck():
             return('Corrected Issue')
 
 # Return Bots
-@app.route('/bots1', methods=['GET'])
-def bots1():
-    return(trading_bots[0])
+# @app.route('/bots1', methods=['GET'])
+# def bots1():
+#     return(trading_bots[0])
 
 # Return Bots
-@app.route('/bots2', methods=['GET'])
-def bots2():
-    return(trading_bots[1])
+# @app.route('/bots2', methods=['GET'])
+# def bots2():
+#     return(trading_bots[1])
 
 @app.route('/binance_futures_fix', methods=['POST'])
 def binance_futures_long():
@@ -529,7 +573,7 @@ def binance_futures_long():
     # client.futures_change_leverage(symbol="SXPUSDT", leverage=20)
     # client.futures_change_margin_type(symbol="SXPUSDT", marginType='CROSSED')
 
-    resp = len(client.futures_get_open_orders(symbol='SXPUSDT'))
+    resp = client.futures_get_open_orders(symbol='SXPUSDT')
 
     print(resp)
     return(resp)
@@ -556,11 +600,19 @@ def binance_futures_trade():
             "message": "Nice try, invalid passphrase"
         }
 
-    if data['pyramid_count'] <= len(client.futures_get_open_orders(symbol=data['exchange_pair'])):
+
+    count = 0
+    open_order = client.futures_get_open_orders(symbol=data['exchange_pair'])
+    
+    for i in open_order:
+        if i['positionSide'] == data['side'].upper():
+            count += 1
+
+    if data['pyramid_count'] <= count:
         return("Too many trades already open")
 
-    if data['side'] == 'LONG':
-        if data['action'] == "OPEN":
+    if data['side'].upper() == 'LONG':
+        if data['action'].upper() == "OPEN":
             if data['using_roe'] == True:
                 takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
             else:
@@ -570,12 +622,12 @@ def binance_futures_trade():
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
         
-        if data['action'] == "CLOSE":
+        if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
 
-    elif data['side'] == 'SHORT':
-        if data['action'] == "OPEN":
+    elif data['side'].upper() == 'SHORT':
+        if data['action'].upper() == "OPEN":
             if data['using_roe'] == True:
                 takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
             else:
@@ -585,7 +637,7 @@ def binance_futures_trade():
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
         
-        if data['action'] == "CLOSE":
+        if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
 
@@ -630,6 +682,7 @@ def kraken_trade():
             "volume": vol,
             "pair": "MINAUSD"
         }, kraken_api_key, kraken_api_sec)    
+
 
     print(resp.json())
     return(resp.json())
@@ -707,7 +760,8 @@ def kucoin_account():
     resp = kucoin_client.get_accounts()
 
     for i in resp:
-        print(i['currency'])
+        if i['currency'] == "ALPACA":
+            print(i)
     return(str(len(resp)))
 
 # Home page
