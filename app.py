@@ -11,7 +11,7 @@ from flask import Flask, request, render_template
 
 from binance.client import Client
 from binance.enums import *
-from binance.streams import BinanceSocketManager
+from binance.streams import BinanceSocketManager, ThreadedWebsocketManager
 
 # import config
 import old_config as config
@@ -291,7 +291,9 @@ def binance_futures_trade():
 
 @app.route('/binance_sockets', methods=['POST'])
 def binance_sockets():
-    pass
+    twm = ThreadedWebsocketManager(tld='us')
+
+
 # Home page
 # @app.route('/')
 # def welcome():
@@ -314,4 +316,29 @@ def binance_sockets():
 
 @app.route('/')
 def nowich():
-    return render_template('nowich.html')
+    return render_template('index.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/projects')
+def projects():
+    return render_template('projects.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+
+@app.route('/project1')
+def project1():
+    return render_template('work/project-1.html')
+
+@app.route('/project2')
+def project2():
+    return render_template('work/project-2.html')
+
+@app.route('/project3')
+def project3():
+    return render_template('work/project-3.html')

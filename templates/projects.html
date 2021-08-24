@@ -1,13 +1,11 @@
 <!DOCTYPE html><!--  This site was created in Webflow. http://www.webflow.com  -->
 <!--  Last Published: Tue Aug 24 2021 09:01:59 GMT+0000 (Coordinated Universal Time)  -->
-<html data-wf-page="6124b29c9e688f0256727e75" data-wf-site="6124b29b9e688fc5f3727e72">
+<html data-wf-page="6124b29c9e688facc5727e81" data-wf-site="6124b29b9e688fc5f3727e72">
 <head>
   <meta charset="utf-8">
-  <title>Business - Webflow HTML website template</title>
-  <meta content="Business - Webflow HTML website template" property="og:title">
-  <meta content="https://uploads-ssl.webflow.com/5c6eb5400253230156de2bd6/5cdc268dd7274d5c05c6009a_Business%20SEO.jpg" property="og:image">
-  <meta content="Business - Webflow HTML website template" property="twitter:title">
-  <meta content="https://uploads-ssl.webflow.com/5c6eb5400253230156de2bd6/5cdc268dd7274d5c05c6009a_Business%20SEO.jpg" property="twitter:image">
+  <title>Projects</title>
+  <meta content="Projects" property="og:title">
+  <meta content="Projects" property="twitter:title">
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta content="Webflow" name="generator">
   <link href="{{ url_for('static', filename='css/normalize.css') }}" rel="stylesheet" type="text/css">
@@ -23,11 +21,11 @@
 <body>
   <div data-collapse="medium" data-animation="default" data-duration="400" role="banner" class="navigation w-nav">
     <div class="navigation-wrap">
-      <a href="" aria-current="page" class="logo-link w-nav-brand w--current"><img src="{{ url_for('static', filename='images/business-logo2x.png') }}" width="108" alt="" class="logo-image"></a>
+      <a href="/" class="logo-link w-nav-brand"><img src="{{ url_for('static', filename='images/business-logo2x.png') }}" width="108" alt="" class="logo-image"></a>
       <div class="menu">
         <nav role="navigation" class="navigation-items w-nav-menu">
           <a href="about" class="navigation-item w-nav-link">About</a>
-          <a href="projects" class="navigation-item w-nav-link">Services</a>
+          <a href="projects" aria-current="page" class="navigation-item w-nav-link w--current">Services</a>
           <a href="contact" class="navigation-item w-nav-link">Contact</a>
         </nav>
         <div class="menu-button w-nav-button"><img src="{{ url_for('static', filename='images/menu-icon_1menu-icon.png') }}" width="22" alt="" class="menu-icon"></div>
@@ -37,48 +35,40 @@
       </a>
     </div>
   </div>
-  <div class="section cc-store-home-wrap">
-    <div class="intro-header">
-      <div class="intro-content cc-homepage">
-        <div class="intro-text">
-          <div class="heading-jumbo">Grow your business.</div>
-          <div class="paragraph-bigger cc-bigger-white-light">Give your business a boost with a beautifully crafted homepage.<br></div>
-        </div>
-        <a href="about" class="button cc-jumbo-button cc-jumbo-white w-inline-block">
-          <div>Learn More</div>
-        </a>
+  <div class="section cc-home-wrap">
+    <div class="intro-header cc-subpage">
+      <div class="intro-content">
+        <div class="heading-jumbo">Our work<br></div>
       </div>
     </div>
+  </div>
+  <div class="section">
     <div class="container">
-      <div class="motto-wrap">
-        <div class="label cc-light">What we believe in</div>
-        <div class="heading-jumbo-small">Grow your business, establish your brand, and put your customers first.<br></div>
+      <div class="section-heading-wrap">
+        <div class="label cc-light">Our Work</div>
+        <h2>Team projects</h2>
       </div>
-      <div class="divider"></div>
-      <div class="home-content-wrap">
-        <div class="w-layout-grid about-grid">
-          <div id="w-node-_86e64837-0616-515b-4568-76c147234d34-56727e75">
-            <div class="home-section-wrap">
-              <div class="label cc-light">About</div>
-              <h2 class="section-heading">Who we are</h2>
-              <p class="paragraph-light">Nulla vel sodales tellus, quis condimentum enim. Nunc porttitor venenatis feugiat. Etiam quis faucibus erat, non accumsan leo. Aliquam erat volutpat. Vestibulum ac faucibus eros. Cras ullamcorper gravida tellus ut consequat.</p>
-            </div>
-            <a href="about" class="button w-inline-block">
-              <div>Learn More</div>
-            </a>
-          </div><img src="{{ url_for('static', filename='images/placeholder-3.svg') }}" id="w-node-_86e64837-0616-515b-4568-76c147234d3f-56727e75" alt="">
+      <div class="w-layout-grid projects-grid">
+        <div id="w-node-_2878ffd7-26fe-9471-3c4e-7763e2d38cdc-c5727e81">
+          <a href="project1" class="project-cover-link w-inline-block"><img src="{{ url_for('static', filename='images/portfolio-1---wide.svg') }}" alt="" class="project-cover-pic"></a>
+          <div class="project-name-wrap">
+            <a href="project1" class="project-name-link">Project #1</a>
+            <div class="paragraph-light">Art direction</div>
+          </div>
         </div>
-        <div class="w-layout-grid about-grid cc-about-2">
-          <div id="w-node-_86e64837-0616-515b-4568-76c147234d41-56727e75">
-            <div class="home-section-wrap">
-              <div class="label cc-light">Team</div>
-              <h2 class="section-heading">What we do</h2>
-              <p class="paragraph-light">Nulla vel sodales tellus, quis condimentum enim. Nunc porttitor venenatis feugiat. Etiam quis faucibus erat, non accumsan leo. Aliquam erat volutpat. Vestibulum ac faucibus eros. Cras ullamcorper gravida tellus ut consequat.</p>
-            </div>
-            <a href="team.html" class="button w-inline-block">
-              <div>Learn More</div>
-            </a>
-          </div><img src="{{ url_for('static', filename='images/placeholder-1.svg') }}" id="w-node-_86e64837-0616-515b-4568-76c147234d4c-56727e75" alt="">
+        <div id="w-node-_2878ffd7-26fe-9471-3c4e-7763e2d38ce3-c5727e81">
+          <a href="project2" class="project-cover-link w-inline-block"><img src="{{ url_for('static', filename='images/portfolio-2---wide.svg') }}" alt="" class="project-cover-pic"></a>
+          <div class="project-name-wrap">
+            <a href="project2" class="project-name-link">Project #2</a>
+            <div class="paragraph-light">Product Design</div>
+          </div>
+        </div>
+        <div id="w-node-_2878ffd7-26fe-9471-3c4e-7763e2d38cea-c5727e81">
+          <a href="project3" class="project-cover-link w-inline-block"><img src="{{ url_for('static', filename='images/portfolio-3---wide.svg') }}" alt="" class="project-cover-pic"></a>
+          <div class="project-name-wrap">
+            <a href="project3" class="project-name-link">Project #3</a>
+            <div class="paragraph-light">Animation</div>
+          </div>
         </div>
       </div>
     </div>
