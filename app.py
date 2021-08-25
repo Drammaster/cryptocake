@@ -168,7 +168,6 @@ def order():
 
             if data['amount_type'].upper() == "PERCENTAGE":
                 quantity = (float(quantity) * (data['amount'] / 100)) / float(data['close']) - 0.5
-                print(quantity)
 
             if data['amount_type'].upper() == "BASE CURRENCY":
                 quantity = float(data['amount'] / float(data['close'])) - 1

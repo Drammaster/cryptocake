@@ -570,10 +570,10 @@ figcaption {
   align-items: center;
   background-color: #f4f4f4;
   /* background-image: url('../images/portfolio-2---wide.svg'); */
-  background-image: url('../images/nowich_google.png');
+  background-image: url('../images/nowich_google_darker.png');
   background-position: 0px 0px;
   background-size: cover;
-  color: #000;
+  color: #fff;
 }
 
 .intro-header.cc-subpage {
