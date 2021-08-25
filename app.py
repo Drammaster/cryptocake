@@ -167,7 +167,8 @@ def order():
             quantity = user_balance.json()['result'][quoteAsset]
 
             if data['amount_type'].upper() == "PERCENTAGE":
-                quantity = (float(quantity) * (data['amount'] / 100)) / float(data['close'])
+                quantity = (float(quantity) * (data['amount'] / 100)) / float(data['close']) - 0.5
+                print(quantity)
 
             if data['amount_type'].upper() == "BASE CURRENCY":
                 quantity = float(data['amount'] / float(data['close'])) - 1
@@ -342,3 +343,11 @@ def project2():
 @app.route('/project3')
 def project3():
     return render_template('work/project-3.html')
+
+@app.route('/project4')
+def project4():
+    return render_template('work/project-4.html')
+
+@app.route('/project5')
+def project5():
+    return render_template('work/project-5.html')

@@ -569,10 +569,11 @@ figcaption {
   -ms-flex-align: center;
   align-items: center;
   background-color: #f4f4f4;
-  background-image: url('../images/portfolio-2---wide.svg');
+  /* background-image: url('../images/portfolio-2---wide.svg'); */
+  background-image: url('../images/nowich_google.png');
   background-position: 0px 0px;
   background-size: cover;
-  color: #fff;
+  color: #000;
 }
 
 .intro-header.cc-subpage {
@@ -1964,6 +1965,28 @@ figcaption {
   grid-row-start: 3;
   -ms-grid-row-span: 1;
   grid-row-end: 4;
+}
+
+#w-node-_2878ffd7-26fe-9471-3c4e-7763e2d38cdd-c5727e81 {
+  -ms-grid-column: 1;
+  grid-column-start: 1;
+  -ms-grid-column-span: 1;
+  grid-column-end: 2;
+  -ms-grid-row: 4;
+  grid-row-start: 4;
+  -ms-grid-row-span: 1;
+  grid-row-end: 5;
+}
+
+#w-node-_2878ffd7-26fe-9471-3c4e-7763e2d38ced-c5727e81 {
+  -ms-grid-column: 1;
+  grid-column-start: 1;
+  -ms-grid-column-span: 1;
+  grid-column-end: 2;
+  -ms-grid-row: 5;
+  grid-row-start: 5;
+  -ms-grid-row-span: 1;
+  grid-row-end: 6;
 }
 
 #w-node-c28cc763-f708-1e61-f196-6bd9fce9803c-df727e83 {
