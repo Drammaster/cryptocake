@@ -241,7 +241,6 @@ def binance_futures_trade():
             "message": "Nice try, invalid passphrase"
         }
 
-
     count = 0
     open_order = client.futures_get_open_orders(symbol=data['exchange_pair'])
     
@@ -254,33 +253,64 @@ def binance_futures_trade():
 
     if data['side'].upper() == 'LONG':
         if data['action'].upper() == "OPEN":
-            if data['using_roe'] == True:
-                takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
-            else:
-                takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
-            takeProfit = round(takeProfit, 2)
 
-            # client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_TAKE_PROFIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, stopPrice=data['close'], timeInForce=TIME_IN_FORCE_GTC)
+            # Get exchange pair decimals
+            step = client.get_symbol_info(data['exchange_pair'])
+            stepMin = step['filters'][2]['stepSize']
+            stepMinSize = 8 - stepMin[::-1].find('1')
 
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+            # Market Order with Take Profit
+            if data['trade_type'].upper() == 'TAKEPROFIT':
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+
+                takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+
+                print(takeProfit)
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
             
-        
+            # Market Order with Trailing Stop Loss
+            if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
+                activation_price = float(data['close']) * 1.0003
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="TRAILING_STOP_MARKET", quantity=data['volume'], activationPrice=activation_price, positionSide='LONG', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
+
         if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
 
     elif data['side'].upper() == 'SHORT':
         if data['action'].upper() == "OPEN":
-            if data['using_roe'] == True:
-                takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
-            else:
-                takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
-            takeProfit = round(takeProfit, 2)
 
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+            # Get exchange pair decimals
+            step = client.get_symbol_info(data['exchange_pair'])
+            stepMin = step['filters'][2]['stepSize']
+            stepMinSize = 8 - stepMin[::-1].find('1')
+
+            # Market Order with Take Profit
+            if data['trade_type'].upper() == 'TAKEPROFIT':
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
+
+                takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
         
+            # Market Order with Trailing Stop Loss
+            if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
+                activation_price = float(data['close']) * 0.9997
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="TRAILING_STOP_MARKET", quantity=data['volume'], activationPrice=activation_price, positionSide='SHORT', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
+
         if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
@@ -293,6 +323,32 @@ def binance_futures_trade():
 def binance_sockets():
     twm = ThreadedWebsocketManager(tld='us')
 
+@app.route('/binance_test', methods=['POST'])
+def binance_test():
+    # Load data from post
+    data = json.loads(request.data)
+
+    takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+    takeProfit = round(takeProfit, 4)
+
+    stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
+    stopLoss = round(stopLoss, 4)
+
+    order_response = order_function_market("BUY", 100, "DOGEUSDT", ORDER_TYPE_MARKET)
+    print(order_response)
+    resp = client.create_oco_order(symbol="DOGEUSDT", side="SELL", quantity="100", price=str(takeProfit), stopPrice=str(round(stopLoss - 0.0001, 4)), stopLimitPrice=str(stopLoss), stopLimitTimeInForce='GTC')
+    print(resp)
+
+    return("Done")
+
+# @app.route('/binance_futures_test', methods=['POST'])
+# def binance_futures_test():
+    # Load data from post
+    # data = json.loads(request.data)
+
+    # client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type="TRAILING_STOP_LOSS",  quantity=data['volume'], isolated=False)
+
+    # return("Done")
 
 # Home page
 # @app.route('/')
