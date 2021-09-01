@@ -13,8 +13,8 @@ from binance.client import Client
 from binance.enums import *
 from binance.streams import BinanceSocketManager, ThreadedWebsocketManager
 
-import config
-# import old_config as config
+# import config
+import old_config as config
 
 from kucoin.client import Client as Kucoin
 
@@ -94,6 +94,14 @@ def order():
         quoteAsset = crypto['symbols'][0]['quoteAsset']
         baseAsset = crypto['symbols'][0]['baseAsset']
 
+        tick = client.get_symbol_info(data['exchange_pair'])
+        tickMin = tick['filters'][0]['tickSize']
+        tickMinSize = 8 - tickMin[::-1].find('1')
+
+        step = client.get_symbol_info(data['exchange_pair'])
+        stepMin = step['filters'][2]['stepSize']
+        stepMinSize = 8 - stepMin[::-1].find('1')
+
         # Long trade
         if data['side'].upper() == 'LONG':
             assets = client.get_asset_balance(asset=quoteAsset)
@@ -111,10 +119,10 @@ def order():
                 if quantity > data['amount']:
                     quantity = data['amount']
 
-            step = client.get_symbol_info(data['exchange_pair'])
-            stepMin = step['filters'][2]['stepSize']
-            stepMinSize = 8 - stepMin[::-1].find('1')
-       
+            resp = client.get_open_orders(symbol=data['exchange_pair'])
+            if len(resp) > 0:
+                client.cancel_order(symbol=data['exchange_pair'], orderId=resp[0]['orderId'])
+
         # Short trade
         if data['side'].upper() == 'SHORT':
             assets = client.get_asset_balance(asset=baseAsset)
@@ -122,15 +130,23 @@ def order():
 
             quantity = float(assets['free'])
 
-            step = client.get_symbol_info(data['exchange_pair'])
-            stepMin = step['filters'][2]['stepSize']
-            stepMinSize = 8 - stepMin[::-1].find('1')
+            resp = client.get_open_orders(symbol=data['exchange_pair'])
+            if len(resp) > 0:
+                client.cancel_order(symbol=data['exchange_pair'], orderId=resp[0]['orderId'])
 
         if quantity > 0:
             if data['order_type'].upper() == "MARKET":
                 order_response = order_function_market(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
             if data['order_type'].upper() == "LIMIT":
-                order_response = order_function_limit(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['price']))
+                order_response = order_function_limit(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['close']))
+            if data['order_type'].upper() == "TAKEPROFIT":
+                order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
+                order_response = order_function_limit("SELL", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['close'] * (data['takeprofit']/100)))
+            if data['order_type'].upper() == "MARKET_OCO":
+                order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
+                time.sleep(1)
+                assets = client.get_asset_balance(asset=baseAsset)
+                order_response = client.create_oco_order(symbol=data['exchange_pair'], side="SELL", quantity=round(float(assets['free']) - float(stepMin), stepMinSize), price=str(float(data['close']) * (1 + float(data['take_profit'])/100)), stopPrice=str(round(((float(data['close']) * (1 - float(data['stop_loss'])/100)) - 0.01), 2)), stopLimitPrice=str(float(data['close']) * (1 - float(data['stop_loss'])/100)), stopLimitTimeInForce='GTC')
         else:
             order_response = "Nothing to trade"
         
@@ -187,7 +203,7 @@ def order():
             "type": data['action'].lower(),
             "volume": quantity,
             "pair": data['exchange_pair'],
-            "price": float(data['price'])
+            "price": float(data['close'])
         }, kraken_api_key, kraken_api_sec)
 
         print(resp.json())
@@ -268,8 +284,6 @@ def binance_futures_trade():
 
                 takeProfit = round(takeProfit - float(stepMin), stepMinSize)
 
-                print(takeProfit)
-
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
             
@@ -318,37 +332,56 @@ def binance_futures_trade():
     return("Done")
 
 
-
-@app.route('/binance_sockets', methods=['POST'])
-def binance_sockets():
-    twm = ThreadedWebsocketManager(tld='us')
-
 @app.route('/binance_test', methods=['POST'])
 def binance_test():
     # Load data from post
     data = json.loads(request.data)
 
-    takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
-    takeProfit = round(takeProfit, 4)
+    # takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+    # takeProfit = round(takeProfit, 4)
 
-    stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
-    stopLoss = round(stopLoss, 4)
+    # stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
+    # stopLoss = round(stopLoss, 4)
 
-    order_response = order_function_market("BUY", 100, "DOGEUSDT", ORDER_TYPE_MARKET)
-    print(order_response)
-    resp = client.create_oco_order(symbol="DOGEUSDT", side="SELL", quantity="100", price=str(takeProfit), stopPrice=str(round(stopLoss - 0.0001, 4)), stopLimitPrice=str(stopLoss), stopLimitTimeInForce='GTC')
-    print(resp)
+    # order_response = order_function_market("BUY", 100, "DOGEUSDT", ORDER_TYPE_MARKET)
+    # print(order_response)
+    # resp = client.create_oco_order(symbol="DOGEUSDT", side="SELL", quantity="100", price=str(takeProfit), stopPrice=str(round(stopLoss - 0.0001, 4)), stopLimitPrice=str(stopLoss), stopLimitTimeInForce='GTC')
+    # print(resp)
+
+    # resp = client.get_open_orders(symbol="BTCUSDT")
+    # print(resp)
+
+    # resp = client.cancel_order(symbol="BTCUSDT", orderId=resp[0]['orderId'])
+    # print(resp)
+
+    tick = client.get_symbol_info(data['exchange_pair'])
+    tickMin = tick['filters'][0]['tickSize']
+    tickMinSize = 8 - tickMin[::-1].find('1')
+    print(tickMinSize)
 
     return("Done")
 
-# @app.route('/binance_futures_test', methods=['POST'])
-# def binance_futures_test():
-    # Load data from post
-    # data = json.loads(request.data)
+@app.route('/binance_futures_test', methods=['POST'])
+def binance_futures_test():
+    
+    bm = BinanceSocketManager(client)
 
-    # client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type="TRAILING_STOP_LOSS",  quantity=data['volume'], isolated=False)
+    # This is our callback function. For now, it just prints messages as they come.
+    def handle_message(msg):
+        print(msg)
 
-    # return("Done")
+    # Start trade socket with 'ETHBTC' and use handle_message to.. handle the message.
+    conn_key = bm.start_trade_socket('ETHBTC', handle_message)
+    # then start the socket manager
+    bm.start()
+
+    # let some data flow..
+    time.sleep(10)
+
+    # stop the socket manager
+    bm.stop_socket(conn_key)
+    
+    return("Done")
 
 # Home page
 # @app.route('/')
