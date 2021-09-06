@@ -579,7 +579,7 @@ figcaption {
 .intro-header.cc-subpage {
   height: 480px;
   background-color: #000;
-  background-image: none;
+  background-image: url('../images/title_background.jpg');;
   color: #fff;
 }
 

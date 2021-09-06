@@ -13,8 +13,10 @@ from binance.client import Client
 from binance.enums import *
 from binance.streams import BinanceSocketManager, ThreadedWebsocketManager
 
-import config
-# import old_config as config
+try:
+    import old_config as config
+except:
+    import config
 
 from kucoin.client import Client as Kucoin
 
