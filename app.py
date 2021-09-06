@@ -143,7 +143,7 @@ def order():
                 order_response = order_function_limit(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['close']))
             if data['order_type'].upper() == "TAKEPROFIT":
                 order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
-                order_response = order_function_limit("SELL", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['close'] * (data['takeprofit']/100)))
+                order_response = order_function_limit("SELL", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(float(data['close']) * (float(data['takeprofit'])/100 + 1)))
             if data['order_type'].upper() == "MARKET_OCO":
                 order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
                 time.sleep(1)
