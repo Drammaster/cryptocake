@@ -6,6 +6,7 @@ import hmac
 import base64
 import time
 import requests
+import decimal
 
 from flask import Flask, request, render_template
 
@@ -273,9 +274,15 @@ def binance_futures_trade():
         if data['action'].upper() == "OPEN":
 
             # Get exchange pair decimals
-            step = client.get_symbol_info(data['exchange_pair'])
-            stepMin = step['filters'][2]['stepSize']
-            stepMinSize = 8 - stepMin[::-1].find('1')
+            # step = client.get_symbol_info(data['exchange_pair'])
+            # stepMin = step['filters'][2]['stepSize']
+            # stepMinSize = 8 - stepMin[::-1].find('1')
+
+            # d = decimal.Decimal(str(data['close']))
+            # d = d.as_tuple().exponent * -1
+
+            # if d < stepMinSize:
+            #     stepMinSize = d
 
             # Market Order with Take Profit
             if data['trade_type'].upper() == 'TAKEPROFIT':
@@ -284,7 +291,8 @@ def binance_futures_trade():
                 else:
                     takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
 
-                takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+                # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+                takeProfit = round(takeProfit, 2)
 
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
@@ -304,9 +312,15 @@ def binance_futures_trade():
         if data['action'].upper() == "OPEN":
 
             # Get exchange pair decimals
-            step = client.get_symbol_info(data['exchange_pair'])
-            stepMin = step['filters'][2]['stepSize']
-            stepMinSize = 8 - stepMin[::-1].find('1')
+            # step = client.get_symbol_info(data['exchange_pair'])
+            # stepMin = step['filters'][2]['stepSize']
+            # stepMinSize = 8 - stepMin[::-1].find('1')
+
+            # d = decimal.Decimal(str(data['close']))
+            # d = d.as_tuple().exponent * -1
+
+            # if d < stepMinSize:
+            #     stepMinSize = d
 
             # Market Order with Take Profit
             if data['trade_type'].upper() == 'TAKEPROFIT':
@@ -315,7 +329,8 @@ def binance_futures_trade():
                 else:
                     takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
 
-                takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+                # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+                takeProfit = round(takeProfit, 2)
 
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
@@ -405,39 +420,39 @@ def binance_futures_test():
 # def svg_animate():
 #     return render_template('svg_animate.html')
 
-@app.route('/')
-def nowich():
-    return render_template('index.html')
+# @app.route('/')
+# def nowich():
+#     return render_template('index.html')
 
-@app.route('/about')
-def about():
-    return render_template('about.html')
+# @app.route('/about')
+# def about():
+#     return render_template('about.html')
 
-@app.route('/projects')
-def projects():
-    return render_template('projects.html')
+# @app.route('/projects')
+# def projects():
+#     return render_template('projects.html')
 
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
+# @app.route('/contact')
+# def contact():
+#     return render_template('contact.html')
 
 
-@app.route('/project1')
-def project1():
-    return render_template('work/project-1.html')
+# @app.route('/project1')
+# def project1():
+#     return render_template('work/project-1.html')
 
-@app.route('/project2')
-def project2():
-    return render_template('work/project-2.html')
+# @app.route('/project2')
+# def project2():
+#     return render_template('work/project-2.html')
 
-@app.route('/project3')
-def project3():
-    return render_template('work/project-3.html')
+# @app.route('/project3')
+# def project3():
+#     return render_template('work/project-3.html')
 
-@app.route('/project4')
-def project4():
-    return render_template('work/project-4.html')
+# @app.route('/project4')
+# def project4():
+#     return render_template('work/project-4.html')
 
-@app.route('/project5')
-def project5():
-    return render_template('work/project-5.html')
+# @app.route('/project5')
+# def project5():
+#     return render_template('work/project-5.html')

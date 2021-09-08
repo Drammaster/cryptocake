@@ -211,7 +211,7 @@ figcaption {
 }
 
 .button:hover {
-  background-color: #32343a;
+  background-color: orange;
   color: #fff;
 }
 
