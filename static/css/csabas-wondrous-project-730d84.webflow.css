@@ -208,11 +208,13 @@ figcaption {
   letter-spacing: 2px;
   text-decoration: none;
   text-transform: uppercase;
+  transition: transform .7s;
 }
 
 .button:hover {
   background-color: orange;
   color: #fff;
+  transform: scale(1.1);
 }
 
 .button:active {
@@ -604,7 +606,7 @@ figcaption {
 .about-story-wrap {
   width: 80%;
   margin: 80px auto;
-  text-align: center;
+  text-align: justify;
 }
 
 .our-services-grid {
@@ -802,7 +804,7 @@ figcaption {
 
 .team-pic {
   width: 100%;
-  height: 420px;
+  height: 270px;
   margin-bottom: 40px;
   background-color: #f4f4f4;
 }
@@ -882,6 +884,7 @@ figcaption {
   -ms-flex-align: center;
   align-items: center;
   text-align: center;
+  z-index: 1;
 }
 
 .project-name-link {
@@ -1248,6 +1251,83 @@ figcaption {
 
 .business-article-heading:active {
   opacity: 0.7;
+}
+
+.section-2 {
+  padding-top: 80px;
+  padding-bottom: 80px;
+  color: #4d4d4d;
+}
+
+.section-2.lightgrey {
+  background-color: #f7f7f7;
+}
+
+.testimonial {
+  margin-bottom: 18px;
+  font-family: Vollkorn, serif;
+  font-size: 18px;
+  font-style: italic;
+}
+
+.testimonials-slider {
+  height: auto;
+  padding-right: 47px;
+  padding-left: 47px;
+  background-color: transparent;
+}
+
+.left-arrow {
+  width: 45px;
+  color: #d1d1d1;
+}
+
+.left-arrow:hover {
+  color: #c7aa8b;
+}
+
+.small-title-wrapper {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.right-arrow {
+  width: 45px;
+  -webkit-transition: all 200ms ease;
+  transition: all 200ms ease;
+  color: #d1d1d1;
+}
+
+.right-arrow:hover {
+  color: #c7aa8b;
+}
+
+.testimonial-slide {
+  width: 50%;
+  padding: 24px 30px;
+  text-align: center;
+}
+
+.small-title {
+  color: rgba(50, 50, 50, 0.36);
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.horizontal-bar {
+  display: inline-block;
+  width: 60px;
+  height: 2px;
+  background-color: #fff;
+}
+
+.horizontal-bar.lightgrey {
+  background-color: rgba(50, 50, 50, 0.18);
+}
+
+.author {
+  color: #c7aa8b;
+  text-transform: uppercase;
 }
 
 @media screen and (max-width: 991px) {

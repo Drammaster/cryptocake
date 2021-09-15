@@ -261,6 +261,7 @@ def binance_futures_trade():
         }
 
     count = 0
+    long_term_counter = 0
     open_order = client.futures_get_open_orders(symbol=data['exchange_pair'])
     
     for i in open_order:
@@ -304,6 +305,39 @@ def binance_futures_trade():
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="TRAILING_STOP_MARKET", quantity=data['volume'], activationPrice=activation_price, positionSide='LONG', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
 
+            # Market Order with Take Profit Limit and Market Stop Loss
+            if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
+                client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+                
+                for i in open_order:
+                    if i['positionSide'] == "SHORT":
+                        long_term_counter += 1
+                        
+                if long_term_counter > 0:
+                    client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+
+                time.sleep(1)
+
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+
+                if data['using_roe'] == True:
+                    stopLoss = float(data['close']) - ((float(data['close']) * data['loss']) / data['leverage'])
+                else:
+                    stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
+                
+                takeProfit = round(takeProfit, 2)
+                stopLoss = round(stopLoss, 2)
+                
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="STOP_MARKET", quantity=data['volume'], stopPrice=stopLoss, positionSide='LONG', timeInForce=TIME_IN_FORCE_GTC)
+
+
         if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
@@ -341,6 +375,38 @@ def binance_futures_trade():
 
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="TRAILING_STOP_MARKET", quantity=data['volume'], activationPrice=activation_price, positionSide='SHORT', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
+
+            # Market Order with Take Profit Limit and Market Stop Loss
+            if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
+                client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+
+                for i in open_order:
+                    if i['positionSide'] == "LONG":
+                        long_term_counter += 1
+
+                if long_term_counter > 0:
+                    client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+
+                time.sleep(1)
+
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
+
+                if data['using_roe'] == True:
+                    stopLoss = float(data['close']) + ((float(data['close']) * data['loss']) / data['leverage'])
+                else:
+                    stopLoss = float(data['close']) + (float(data['close']) * (data['loss']/100))
+                
+                takeProfit = round(takeProfit, 2)
+                stopLoss = round(stopLoss, 2)
+                
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="STOP_MARKET", quantity=data['volume'], stopPrice=stopLoss, positionSide='SHORT', timeInForce=TIME_IN_FORCE_GTC)
 
         if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
@@ -381,22 +447,7 @@ def binance_test():
 @app.route('/binance_futures_test', methods=['POST'])
 def binance_futures_test():
     
-    bm = BinanceSocketManager(client)
-
-    # This is our callback function. For now, it just prints messages as they come.
-    def handle_message(msg):
-        print(msg)
-
-    # Start trade socket with 'ETHBTC' and use handle_message to.. handle the message.
-    conn_key = bm.start_trade_socket('ETHBTC', handle_message)
-    # then start the socket manager
-    bm.start()
-
-    # let some data flow..
-    time.sleep(10)
-
-    # stop the socket manager
-    bm.stop_socket(conn_key)
+    client.futures_change_leverage(symbol="BTCUSDT", leverage=1)
     
     return("Done")
 
@@ -420,39 +471,43 @@ def binance_futures_test():
 # def svg_animate():
 #     return render_template('svg_animate.html')
 
-# @app.route('/')
-# def nowich():
-#     return render_template('index.html')
+@app.route('/')
+def nowich():
+    return render_template('index.html')
 
-# @app.route('/about')
-# def about():
-#     return render_template('about.html')
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
-# @app.route('/projects')
-# def projects():
-#     return render_template('projects.html')
+@app.route('/team')
+def team():
+    return render_template('team.html')
 
-# @app.route('/contact')
-# def contact():
-#     return render_template('contact.html')
+@app.route('/projects')
+def projects():
+    return render_template('projects.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 
-# @app.route('/project1')
-# def project1():
-#     return render_template('work/project-1.html')
+@app.route('/project1')
+def project1():
+    return render_template('work/project-1.html')
 
-# @app.route('/project2')
-# def project2():
-#     return render_template('work/project-2.html')
+@app.route('/project2')
+def project2():
+    return render_template('work/project-2.html')
 
-# @app.route('/project3')
-# def project3():
-#     return render_template('work/project-3.html')
+@app.route('/project3')
+def project3():
+    return render_template('work/project-3.html')
 
-# @app.route('/project4')
-# def project4():
-#     return render_template('work/project-4.html')
+@app.route('/project4')
+def project4():
+    return render_template('work/project-4.html')
 
-# @app.route('/project5')
-# def project5():
-#     return render_template('work/project-5.html')
+@app.route('/project5')
+def project5():
+    return render_template('work/project-5.html')
