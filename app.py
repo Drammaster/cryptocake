@@ -437,11 +437,27 @@ def binance_test():
     # resp = client.cancel_order(symbol="BTCUSDT", orderId=resp[0]['orderId'])
     # print(resp)
 
-    tick = client.get_symbol_info(data['exchange_pair'])
-    tickMin = tick['filters'][0]['tickSize']
-    tickMinSize = 8 - tickMin[::-1].find('1')
-    print(tickMinSize)
+    # tick = client.get_symbol_info(data['exchange_pair'])
+    # tickMin = tick['filters'][0]['tickSize']
+    # tickMinSize = 8 - tickMin[::-1].find('1')
+    # print(tickMinSize)
 
+    hold = 5
+
+    resp = client.futures_account_balance()
+    balance = resp[1]['balance']
+    print(balance)
+
+    resp = client.futures_mark_price()
+    price = ""
+
+    for i in resp:
+        if i['symbol'] == "LUNAUSDT":
+            price = i['markPrice']
+    
+    
+
+    print(price)
     return("Done")
 
 @app.route('/binance_futures_test', methods=['POST'])

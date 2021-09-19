@@ -578,10 +578,38 @@ figcaption {
   color: #fff;
 }
 
-.intro-header.cc-subpage {
+.intro-header.cc-subpage-about {
   height: 480px;
   background-color: #000;
-  background-image: url('../images/title_background.jpg');;
+  background-image: url('../images/About Us dark.jpg');;
+  color: #fff;
+}
+
+.intro-header.cc-subpage-services {
+  height: 480px;
+  background-color: #000;
+  background-image: url('../images/Services dark.jpg');;
+  color: #fff;
+}
+
+.intro-header.cc-subpage-team {
+  height: 480px;
+  background-color: #000;
+  background-image: url('../images/meet the team dark.jpg');;
+  color: #fff;
+}
+
+.intro-header.cc-subpage-testamonials {
+  height: 480px;
+  background-color: #000;
+  background-image: url('../images/Testimonials dark.jpg');;
+  color: #fff;
+}
+
+.intro-header.cc-subpage-contactus {
+  height: 480px;
+  background-color: #000;
+  background-image: url('../images/contact us dark.jpg');;
   color: #fff;
 }
 
@@ -931,19 +959,29 @@ figcaption {
   -ms-flex-align: center;
   align-items: center;
   background-color: #f4f4f4;
-  background-image: url('../images/portfolio-1---wide.svg');
+  background-image: url('../images/Google Ads dark.jpg');
   background-position: 50% 50%;
   background-size: cover;
   color: #fff;
 }
 
 .project-overview-header.cc-project-2-header {
-  background-image: url('../images/portfolio-2---wide.svg');
+  background-image: url('../images/Web Development dark.jpg');
   background-position: 50% 50%;
 }
 
 .project-overview-header.cc-project-3-header {
-  background-image: url('../images/portfolio-3---wide.svg');
+  background-image: url('../images/Social Media dark.jpg');
+  background-size: cover;
+}
+
+.project-overview-header.cc-project-4-header {
+  background-image: url('../images/Remarketing dark.jpg');
+  background-position: 50% 50%;
+}
+
+.project-overview-header.cc-project-5-header {
+  background-image: url('../images/pexels-serpstat-572056-1-scaled dark.jpg');
   background-size: cover;
 }
 
