@@ -1596,6 +1596,12 @@ figcaption {
     padding-right: 15px;
     text-align: center;
   }
+
+  .testimonial-slide {
+    width: 100%;
+    padding-right: 92px;
+    padding-left: 92px;
+  }
 }
 
 @media screen and (max-width: 767px) {
@@ -1735,6 +1741,24 @@ figcaption {
 
   ._404-wrap {
     padding: 30px;
+  }
+  
+  .slider {
+    height: 392px;
+  }
+
+  .testimonials-slider {
+    padding-right: 19px;
+    padding-left: 19px;
+  }
+
+  .testimonial-slide {
+    padding-right: 34px;
+    padding-left: 34px;
+  }
+
+  .section-2 {
+    padding: 34px 10px;
   }
 }
 
