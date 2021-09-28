@@ -268,8 +268,7 @@ def binance_futures_trade():
         if i['positionSide'] == data['side'].upper():
             count += 1
 
-    if data['pyramid_count'] <= count:
-        return("Too many trades already open")
+    
 
     exchanges = client.futures_exchange_info()
 
@@ -279,6 +278,9 @@ def binance_futures_trade():
 
     if data['side'].upper() == 'LONG':
         if data['action'].upper() == "OPEN":
+
+            if data['pyramid_count'] <= count:
+                return("Too many trades already open")
 
             # Get exchange pair decimals
             # step = client.get_symbol_info(data['exchange_pair'])
@@ -392,10 +394,20 @@ def binance_futures_trade():
 
         if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+
+            positions = client.futures_position_information()
+
+            for i in positions:
+                if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
+                    volume = float(i['positionAmt'])
+
             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
     elif data['side'].upper() == 'SHORT':
         if data['action'].upper() == "OPEN":
+
+            if data['pyramid_count'] <= count:
+                return("Too many trades already open")
 
             # Get exchange pair decimals
             # step = client.get_symbol_info(data['exchange_pair'])
@@ -418,15 +430,45 @@ def binance_futures_trade():
                 # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
                 takeProfit = round(takeProfit, 2)
 
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
+
+                    resp = client.futures_mark_price()
+                    price = ""
+
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
+
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
         
             # Market Order with Trailing Stop Loss
             if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
                 activation_price = float(data['close']) * 0.9997
 
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="TRAILING_STOP_MARKET", quantity=data['volume'], activationPrice=activation_price, positionSide='SHORT', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
+
+                    resp = client.futures_mark_price()
+                    price = ""
+
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
+
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="TRAILING_STOP_MARKET", quantity=round(volume, volume_precision), activationPrice=activation_price, positionSide='SHORT', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
 
             # Market Order with Take Profit Limit and Market Stop Loss
             if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
@@ -436,8 +478,23 @@ def binance_futures_trade():
                     if i['positionSide'] == "LONG":
                         long_term_counter += 1
 
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
+
+                    resp = client.futures_mark_price()
+                    price = ""
+
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
+
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+
                 if long_term_counter > 0:
-                    client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+                    client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
                 time.sleep(1)
 
@@ -454,15 +511,22 @@ def binance_futures_trade():
                 takeProfit = round(takeProfit, 2)
                 stopLoss = round(stopLoss, 2)
                 
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=data['volume'], positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
 
-                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="STOP_MARKET", quantity=data['volume'], stopPrice=stopLoss, positionSide='SHORT', timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="STOP_MARKET", quantity=round(volume, volume_precision), stopPrice=stopLoss, positionSide='SHORT', timeInForce=TIME_IN_FORCE_GTC)
 
         if data['action'].upper() == "CLOSE":
             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
-            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=data['volume'], isolated=False)
+
+            positions = client.futures_position_information()
+
+            for i in positions:
+                if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
+                    volume = float(i['positionAmt'])
+
+            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
     return("Done")
 
@@ -494,11 +558,11 @@ def binance_test():
     # tickMinSize = 8 - tickMin[::-1].find('1')
     # print(tickMinSize)
 
-    exchanges = client.futures_exchange_info()
+    # exchanges = client.futures_exchange_info()
 
-    for x in exchanges['symbols']:
-        if x['symbol'] == data['exchange_pair']:
-            print(x['quantityPrecision'])
+    # for x in exchanges['symbols']:
+    #     if x['symbol'] == data['exchange_pair']:
+    #         print(x['quantityPrecision'])
 
     # hold = 5
 
@@ -519,8 +583,14 @@ def binance_test():
 
     # volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
     # print(volume)
+    positions = client.futures_position_information()
+
+    for i in positions:
+        if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
+            volume = i['positionAmt']
+            print(type(volume))
     
-    return(client.futures_exchange_info())
+    return("done")
 
 @app.route('/binance_futures_test', methods=['POST'])
 def binance_futures_test():
