@@ -693,9 +693,9 @@ def pop_test():
 # Home page
 @app.route('/')
 def welcome():
-    balances = client.get_account()['balances']
+    # balances = client.get_account()['balances']
 
-    return render_template('old_index.html', balances=balances)
+    return render_template('old_index.html')
 
 
 # @app.route('/moon')
