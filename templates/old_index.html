@@ -9,7 +9,8 @@
 
 </header>
 <body>
-    {% for balance in balances %}
+    <h1>This is great!</h1>
+    {% comment %} {% for balance in balances %}
         {% if balance['free'] != "0.00000000" %}
             {% if balance['free'] != "0.00" %}
                 <div class="box">
@@ -22,6 +23,6 @@
                 </div>
             {% endif %}
         {% endif %}
-    {% endfor %}
+    {% endfor %} {% endcomment %}
 </body>
 </html>

@@ -7,6 +7,8 @@ import base64
 import time
 import requests
 import decimal
+import datetime
+import hashlib
 
 from flask import Flask, request, render_template
 
@@ -32,6 +34,7 @@ kraken_api_sec = config.KRAKEN_API_SECRET
 #Binance
 client = Client(config.API_KEY, config.API_SECRET)
 
+#Kucoin
 kucoin_client = Kucoin(config.KUCOIN_API_KEY, config.KUCOIN_API_SECRET, config.KUCOIN_PASSPHRASE)
 
 def get_kraken_signature(urlpath, data, secret):
@@ -599,12 +602,100 @@ def binance_futures_test():
     
     return("Done")
 
-# Home page
-# @app.route('/')
-# def welcome():
-#     balances = client.get_account()['balances']
+@app.route('/encode_test', methods=['POST'])
+def encode_test():
+    # Load data from post
+    data = json.loads(request.data)
 
-#     return render_template('index.html', balances=balances, trading_bots=trading_bots)
+    value_bytes = data['value'].encode('latin-1')
+    base85_bytes = base64.b85encode(value_bytes)
+    print(base85_bytes)
+    base85_message = base85_bytes.decode('latin-1')
+
+    base85_bytes = base85_message.encode('latin-1')
+    message_bytes = base64.b85decode(base85_bytes)
+    message = message_bytes.decode('latin-1')
+
+    if data['value'] == message:
+        print("Its good!")
+    else:
+        print("It's not good.")
+        print(message, " <-- does not look like --> ", data['value'])
+
+    return("Done")
+
+@app.route('/get_date', methods=['POST'])
+def get_date():
+    
+    today = datetime.date.today()
+    
+    if str(today) == "2021-09-30":
+        print("Same day")
+
+    return("Done")
+
+
+@app.route('/hashing', methods=['POST'])
+def hashing():
+    # Load data from post
+    data = json.loads(request.data)
+
+    secret = hashlib.sha256("Test".encode())
+
+    password = hashlib.sha256(data['password'].encode())
+
+    if password.hexdigest() == secret.hexdigest():
+        print("Acces Granted")
+    else:
+        print("Intruder Alert!!!")
+
+    return("Done")
+
+@app.route('/ceaser_cipher', methods=['POST'])
+def ceaser_cipher():
+    # Load data from post
+    data = json.loads(request.data)
+
+    result = ""
+
+    for i in range(len(data['secret'])):
+        char = data['secret'][i]
+
+        if (char.isupper()):
+            result += chr((ord(char) + data["shift"] - 65) % 26 + 65)
+        else:
+            result += chr((ord(char) + data["shift"] - 97) % 26 + 97)
+        
+    print(result)
+
+    return("Done")
+
+@app.route('/get_ascii', methods=['POST'])
+def get_ascii():
+    # Load data from post
+    data = json.loads(request.data)    
+        
+    print(ord(data['value']))
+    print(chr(ord(data['value'])+2))
+
+    return("Done")
+
+@app.route('/pop_test', methods=['POST'])
+def pop_test():
+    # Load data from post
+    data = json.loads(request.data)    
+        
+    print(data['value'][:-2])
+    print(data['value'][-2:-1])
+
+    return("Done")
+
+# Home page
+@app.route('/')
+def welcome():
+    balances = client.get_account()['balances']
+
+    return render_template('old_index.html', balances=balances)
 
 
 # @app.route('/moon')
@@ -619,47 +710,47 @@ def binance_futures_test():
 # def svg_animate():
 #     return render_template('svg_animate.html')
 
-@app.route('/')
-def nowich():
-    return render_template('index.html')
+# @app.route('/')
+# def nowich():
+#     return render_template('index.html')
 
-@app.route('/about')
-def about():
-    return render_template('about.html')
+# @app.route('/about')
+# def about():
+#     return render_template('about.html')
 
-@app.route('/team')
-def team():
-    return render_template('team.html')
+# @app.route('/team')
+# def team():
+#     return render_template('team.html')
 
-@app.route('/projects')
-def projects():
-    return render_template('projects.html')
+# @app.route('/projects')
+# def projects():
+#     return render_template('projects.html')
 
-@app.route('/testimonials')
-def testimonials():
-    return render_template('testimonials.html')
+# @app.route('/testimonials')
+# def testimonials():
+#     return render_template('testimonials.html')
 
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
+# @app.route('/contact')
+# def contact():
+#     return render_template('contact.html')
 
 
-@app.route('/project1')
-def project1():
-    return render_template('work/project-1.html')
+# @app.route('/project1')
+# def project1():
+#     return render_template('work/project-1.html')
 
-@app.route('/project2')
-def project2():
-    return render_template('work/project-2.html')
+# @app.route('/project2')
+# def project2():
+#     return render_template('work/project-2.html')
 
-@app.route('/project3')
-def project3():
-    return render_template('work/project-3.html')
+# @app.route('/project3')
+# def project3():
+#     return render_template('work/project-3.html')
 
-@app.route('/project4')
-def project4():
-    return render_template('work/project-4.html')
+# @app.route('/project4')
+# def project4():
+#     return render_template('work/project-4.html')
 
-@app.route('/project5')
-def project5():
-    return render_template('work/project-5.html')
+# @app.route('/project5')
+# def project5():
+#     return render_template('work/project-5.html')
