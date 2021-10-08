@@ -32,7 +32,7 @@ kraken_api_key = config.KRAKEN_API_KEY
 kraken_api_sec = config.KRAKEN_API_SECRET
 
 #Binance
-# client = Client(config.API_KEY, config.API_SECRET)
+client = Client(config.API_KEY, config.API_SECRET)
 
 #Kucoin
 kucoin_client = Kucoin(config.KUCOIN_API_KEY, config.KUCOIN_API_SECRET, config.KUCOIN_PASSPHRASE)
@@ -693,8 +693,9 @@ def pop_test():
 # Home page
 @app.route('/')
 def welcome():
+    balances = client.get_account()['balances']
 
-    return render_template('old_index.html')
+    return render_template('old_index.html', balances=balances)
 
 
 # @app.route('/moon')
