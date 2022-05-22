@@ -9,6 +9,8 @@
 
 </header>
 <body>
+
+    <!--
     {% for balance in balances %}
         {% if balance['free'] != "0.00000000" %}
             {% if balance['free'] != "0.00" %}
@@ -23,5 +25,23 @@
             {% endif %}
         {% endif %}
     {% endfor %}
+    -->
+
+    <script src="https://widgets.coingecko.com/coingecko-coin-price-marquee-widget.js"></script>
+    <coingecko-coin-price-marquee-widget  coin-ids="bitcoin,ethereum,eos,ripple,litecoin" currency="usd" background-color="#ffffff" locale="en"></coingecko-coin-price-marquee-widget>
+
+    <!--
+        <script src="https://widgets.coingecko.com/coingecko-coin-price-chart-widget.js"></script>
+    <coingecko-coin-price-chart-widget  coin-id="bitcoin" currency="usd" height="300" locale="en"></coingecko-coin-price-chart-widget>
+    -->
+    
+    <form method="POST">
+        <input name="text">
+        <input type="submit">
+    </form>
+
+
+    <script src="https://widgets.coingecko.com/coingecko-coin-market-ticker-list-widget.js"></script>
+    <coingecko-coin-market-ticker-list-widget  coin-id="superrare" currency="usd" locale="en"></coingecko-coin-market-ticker-list-widget>
 </body>
 </html>

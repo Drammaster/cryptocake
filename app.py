@@ -9,12 +9,14 @@ import requests
 import decimal
 import datetime
 import hashlib
+from datetime import datetime
 
 from flask import Flask, request, render_template
 
 from binance.client import Client
 from binance.enums import *
-from binance.streams import BinanceSocketManager, ThreadedWebsocketManager
+from binance.streams import BinanceSocketManager
+from binance import ThreadedWebsocketManager
 
 try:
     import old_config as config
@@ -26,581 +28,629 @@ from kucoin.client import Client as Kucoin
 app = Flask(__name__)
 
 
-# #Kraken
-# kraken_api_url = "https://api.kraken.com"
-# kraken_api_key = config.KRAKEN_API_KEY
-# kraken_api_sec = config.KRAKEN_API_SECRET
+#Kraken
+kraken_api_url = "https://api.kraken.com"
+kraken_api_key = config.KRAKEN_API_KEY
+kraken_api_sec = config.KRAKEN_API_SECRET
 
-# #Binance
-# client = Client(config.API_KEY, config.API_SECRET)
+#Binance
+client = Client(config.API_KEY, config.API_SECRET)
 
-# #Kucoin
-# kucoin_client = Kucoin(config.KUCOIN_API_KEY, config.KUCOIN_API_SECRET, config.KUCOIN_PASSPHRASE)
+#Kucoin
+kucoin_client = Kucoin(config.KUCOIN_API_KEY, config.KUCOIN_API_SECRET, config.KUCOIN_PASSPHRASE)
 
-# def get_kraken_signature(urlpath, data, secret):
-#     postdata = urllib.parse.urlencode(data)
-#     encoded = (str(data['nonce']) + postdata).encode()
-#     message = urlpath.encode() + hashlib.sha256(encoded).digest()
+def get_kraken_signature(urlpath, data, secret):
+    postdata = urllib.parse.urlencode(data)
+    encoded = (str(data['nonce']) + postdata).encode()
+    message = urlpath.encode() + hashlib.sha256(encoded).digest()
 
-#     mac = hmac.new(base64.b64decode(secret), message, hashlib.sha512)
-#     sigdigest = base64.b64encode(mac.digest())
-#     return sigdigest.decode()
+    mac = hmac.new(base64.b64decode(secret), message, hashlib.sha512)
+    sigdigest = base64.b64encode(mac.digest())
+    return sigdigest.decode()
 
-# def kraken_request(uri_path, data, kraken_api_key, kraken_api_sec):
-#     headers = {}
-#     headers['API-Key'] = kraken_api_key
-#     # get_kraken_signature() as defined in the 'Authentication' section
-#     headers['API-Sign'] = get_kraken_signature(uri_path, data, kraken_api_sec)             
-#     req = requests.post((kraken_api_url + uri_path), headers=headers, data=data)
-#     return req
-
-
-# # Live trading function
-# def order_function_market(side, quantity, symbol, order_type):
-#     try:
-#         print(f"sending order {order_type} - {side} {quantity} {symbol}")
-#         order = client.create_order(symbol=symbol, side=side, type=order_type, quantity=quantity)
-#     except Exception as e:
-#         print("an exception occured - {}".format(e))
-#         return False
-
-#     return order
-
-# def order_function_limit(side, quantity, symbol, order_type, price):
-#     try:
-#         print(f"sending order {order_type} - {side} {quantity} {symbol} at {price}")
-#         order = client.create_order(symbol=symbol, side=side, type=order_type, quantity=quantity, price=price, timeInForce=TIME_IN_FORCE_GTC)
-#     except Exception as e:
-#         print("an exception occured - {}".format(e))
-#         return False
-
-#     return order
+def kraken_request(uri_path, data, kraken_api_key, kraken_api_sec):
+    headers = {}
+    headers['API-Key'] = kraken_api_key
+    # get_kraken_signature() as defined in the 'Authentication' section
+    headers['API-Sign'] = get_kraken_signature(uri_path, data, kraken_api_sec)             
+    req = requests.post((kraken_api_url + uri_path), headers=headers, data=data)
+    return req
 
 
-# # Trade API
-# @app.route('/order', methods=['POST'])
-# def order():
-#     # Load data from post
-#     data = json.loads(request.data)
+# Live trading function
+def order_function_market(side, quantity, symbol, order_type):
+    try:
+        print(f"sending order {order_type} - {side} {quantity} {symbol}")
+        order = client.create_order(symbol=symbol, side=side, type=order_type, quantity=quantity)
+    except Exception as e:
+        print("an exception occured - {}".format(e))
+        return False
 
-#     time.sleep(data['delay_seconds'])
+    return order
 
-#     # Check for security phrase
-#     if data['passphrase'] != config.WEBHOOK_PHRASE:
-#         return {
-#             "code": "error",
-#             "message": "Nice try, invalid passphrase"
-#         }
+def order_function_limit(side, quantity, symbol, order_type, price):
+    try:
+        print(f"sending order {order_type} - {side} {quantity} {symbol} at {price}")
+        order = client.create_order(symbol=symbol, side=side, type=order_type, quantity=quantity, price=price, timeInForce=TIME_IN_FORCE_GTC)
+    except Exception as e:
+        print("an exception occured - {}".format(e))
+        return False
 
-#     # Binance Spot Trade
-#     if data['platform'].upper() == "BINANCE":
+    return order
 
-#         # Get exchange information from binance
-#         crypto = requests.get("https://api.binance.com/api/v3/exchangeInfo?symbol=" + data['exchange_pair']).json()
-#         quoteAsset = crypto['symbols'][0]['quoteAsset']
-#         baseAsset = crypto['symbols'][0]['baseAsset']
 
-#         tick = client.get_symbol_info(data['exchange_pair'])
-#         tickMin = tick['filters'][0]['tickSize']
-#         tickMinSize = 8 - tickMin[::-1].find('1')
+# Trade API
+@app.route('/order', methods=['POST'])
+def order():
+    # Load data from post
+    data = json.loads(request.data)
 
-#         step = client.get_symbol_info(data['exchange_pair'])
-#         stepMin = step['filters'][2]['stepSize']
-#         stepMinSize = 8 - stepMin[::-1].find('1')
+    time.sleep(data['delay_seconds'])
 
-#         # Long trade
-#         if data['side'].upper() == 'LONG':
-#             assets = client.get_asset_balance(asset=quoteAsset)
-#             price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['exchange_pair']).json()
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
 
-#             quantity = float((float(assets['free']) / float(price['price']))*0.9995)
+    # Binance Spot Trade
+    if data['platform'].upper() == "BINANCE":
 
-#             if data['amount_type'].upper() == "PERCENTAGE":
-#                 quantity = quantity * (data['amount'] / 100)
+        # Get exchange information from binance
+        crypto = requests.get("https://api.binance.com/api/v3/exchangeInfo?symbol=" + data['exchange_pair']).json()
+        quoteAsset = crypto['symbols'][0]['quoteAsset']
+        baseAsset = crypto['symbols'][0]['baseAsset']
 
-#             if data['amount_type'].upper() == "BASE CURRENCY":
-#                 quantity = float(data['amount'] / float(price['price']))*0.9995
+        tick = client.get_symbol_info(data['exchange_pair'])
+        tickMin = tick['filters'][0]['tickSize']
+        tickMinSize = 8 - tickMin[::-1].find('1')
+
+        step = client.get_symbol_info(data['exchange_pair'])
+        stepMin = step['filters'][2]['stepSize']
+        stepMinSize = 8 - stepMin[::-1].find('1')
+
+        # Long trade
+        if data['side'].upper() == 'LONG':
+            assets = client.get_asset_balance(asset=quoteAsset)
+            price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['exchange_pair']).json()
+
+            quantity = float((float(assets['free']) / float(price['price']))*0.9995)
+
+            if data['amount_type'].upper() == "PERCENTAGE":
+                quantity = quantity * (data['amount'] / 100)
+
+            if data['amount_type'].upper() == "BASE CURRENCY":
+                quantity = float(data['amount'] / float(price['price']))*0.9995
             
-#             if data['amount_type'].upper() == "CONTRACTS":
-#                 if quantity > data['amount']:
-#                     quantity = data['amount']
+            if data['amount_type'].upper() == "CONTRACTS":
+                if quantity > data['amount']:
+                    quantity = data['amount']
 
-#             resp = client.get_open_orders(symbol=data['exchange_pair'])
-#             if len(resp) > 0:
-#                 client.cancel_order(symbol=data['exchange_pair'], orderId=resp[0]['orderId'])
+            resp = client.get_open_orders(symbol=data['exchange_pair'])
+            if len(resp) > 0:
+                client.cancel_order(symbol=data['exchange_pair'], orderId=resp[0]['orderId'])
 
-#         # Short trade
-#         if data['side'].upper() == 'SHORT':
-#             assets = client.get_asset_balance(asset=baseAsset)
-#             price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['exchange_pair']).json()
+        # Short trade
+        if data['side'].upper() == 'SHORT':
+            assets = client.get_asset_balance(asset=baseAsset)
+            price = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=" + data['exchange_pair']).json()
 
-#             quantity = float(assets['free'])
+            quantity = float(assets['free'])
 
-#             resp = client.get_open_orders(symbol=data['exchange_pair'])
-#             if len(resp) > 0:
-#                 client.cancel_order(symbol=data['exchange_pair'], orderId=resp[0]['orderId'])
+            resp = client.get_open_orders(symbol=data['exchange_pair'])
+            if len(resp) > 0:
+                client.cancel_order(symbol=data['exchange_pair'], orderId=resp[0]['orderId'])
 
-#         if quantity > 0:
-#             if data['order_type'].upper() == "MARKET":
-#                 order_response = order_function_market(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
-#             if data['order_type'].upper() == "LIMIT":
-#                 order_response = order_function_limit(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['close']))
-#             if data['order_type'].upper() == "TAKEPROFIT":
-#                 order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
-#                 order_response = order_function_limit("SELL", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(float(data['close']) * (float(data['takeprofit'])/100 + 1)))
-#             if data['order_type'].upper() == "MARKET_OCO":
-#                 order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
-#                 time.sleep(1)
-#                 assets = client.get_asset_balance(asset=baseAsset)
-#                 order_response = client.create_oco_order(symbol=data['exchange_pair'], side="SELL", quantity=round(float(assets['free']) - float(stepMin), stepMinSize), price=str(float(data['close']) * (1 + float(data['take_profit'])/100)), stopPrice=str(round(((float(data['close']) * (1 - float(data['stop_loss'])/100)) - 0.01), 2)), stopLimitPrice=str(float(data['close']) * (1 - float(data['stop_loss'])/100)), stopLimitTimeInForce='GTC')
-#         else:
-#             order_response = "Nothing to trade"
+        if quantity > 0:
+            if data['order_type'].upper() == "MARKET":
+                order_response = order_function_market(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
+            if data['order_type'].upper() == "LIMIT":
+                order_response = order_function_limit(data['action'].upper(), round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(data['close']))
+            if data['order_type'].upper() == "TAKEPROFIT":
+                order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
+                order_response = order_function_limit("SELL", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_LIMIT, str(float(data['close']) * (float(data['takeprofit'])/100 + 1)))
+            if data['order_type'].upper() == "MARKET_OCO":
+                order_response = order_function_market("BUY", round(quantity - float(stepMin), stepMinSize), data['exchange_pair'], ORDER_TYPE_MARKET)
+                time.sleep(1)
+                assets = client.get_asset_balance(asset=baseAsset)
+                order_response = client.create_oco_order(symbol=data['exchange_pair'], side="SELL", quantity=round(float(assets['free']) - float(stepMin), stepMinSize), price=str(float(data['close']) * (1 + float(data['take_profit'])/100)), stopPrice=str(round(((float(data['close']) * (1 - float(data['stop_loss'])/100)) - 0.01), 2)), stopLimitPrice=str(float(data['close']) * (1 - float(data['stop_loss'])/100)), stopLimitTimeInForce='GTC')
+        else:
+            order_response = "Nothing to trade"
         
 
-#         if order_response == "Nothing to trade":
-#             return {
-#                 "code": "error",
-#                 "message": order_response
-#             }
-#         elif order_response:
-#             return {
-#                 "code": "success",
-#                 "message": "order executed"
-#             }
-#         else:
-#             return {
-#                 "code": "error",
-#                 "message": order_response
-#             }
+        if order_response == "Nothing to trade":
+            return {
+                "code": "error",
+                "message": order_response
+            }
+        elif order_response:
+            return {
+                "code": "success",
+                "message": "order executed"
+            }
+        else:
+            return {
+                "code": "error",
+                "message": order_response
+            }
 
-#     # Kraken Spot Trade
-#     if data['platform'].upper() == "KRAKEN":
-#         # Request user balances
-#         user_balance = kraken_request('/0/private/Balance', {
-#             "nonce": str(int(1000*time.time()))
-#         }, kraken_api_key, kraken_api_sec)
+    # Kraken Spot Trade
+    if data['platform'].upper() == "KRAKEN":
+        # Request user balances
+        user_balance = kraken_request('/0/private/Balance', {
+            "nonce": str(int(1000*time.time()))
+        }, kraken_api_key, kraken_api_sec)
 
-#         pair_info = requests.get('https://api.kraken.com/0/public/AssetPairs?pair=' + data['exchange_pair'])
-#         quoteAsset = pair_info.json()['result'][data['exchange_pair']]['quote']
-#         baseAsset = pair_info.json()['result'][data['exchange_pair']]['base']
+        pair_info = requests.get('https://api.kraken.com/0/public/AssetPairs?pair=' + data['exchange_pair'])
+        quoteAsset = pair_info.json()['result'][data['exchange_pair']]['quote']
+        baseAsset = pair_info.json()['result'][data['exchange_pair']]['base']
 
         
-#         if data['side'].upper() == "LONG":
-#             quantity = user_balance.json()['result'][quoteAsset]
+        if data['side'].upper() == "LONG":
+            quantity = user_balance.json()['result'][quoteAsset]
 
-#             if data['amount_type'].upper() == "PERCENTAGE":
-#                 quantity = (float(quantity) * (data['amount'] / 100)) / float(data['close']) - 0.5
+            if data['amount_type'].upper() == "PERCENTAGE":
+                quantity = (float(quantity) * (data['amount'] / 100)) / float(data['close']) - 0.5
 
-#             if data['amount_type'].upper() == "BASE CURRENCY":
-#                 quantity = float(data['amount'] / float(data['close'])) - 1
+            if data['amount_type'].upper() == "BASE CURRENCY":
+                quantity = float(data['amount'] / float(data['close'])) - 1
             
-#             if data['amount_type'].upper() == "CONTRACTS":
-#                 if float(quantity) > data['amount']:
-#                     quantity = data['amount']
+            if data['amount_type'].upper() == "CONTRACTS":
+                if float(quantity) > data['amount']:
+                    quantity = data['amount']
 
 
-#         if data['side'].upper() == "SHORT":
-#             quantity = user_balance.json()['result'][baseAsset]
+        if data['side'].upper() == "SHORT":
+            quantity = user_balance.json()['result'][baseAsset]
 
 
-#         resp = kraken_request('/0/private/AddOrder', {
-#             "nonce": str(int(1000*time.time())),
-#             "ordertype": data['order_type'].lower(),
-#             "type": data['action'].lower(),
-#             "volume": quantity,
-#             "pair": data['exchange_pair'],
-#             "price": float(data['close'])
-#         }, kraken_api_key, kraken_api_sec)
+        resp = kraken_request('/0/private/AddOrder', {
+            "nonce": str(int(1000*time.time())),
+            "ordertype": data['order_type'].lower(),
+            "type": data['action'].lower(),
+            "volume": quantity,
+            "pair": data['exchange_pair'],
+            "price": float(data['close'])
+        }, kraken_api_key, kraken_api_sec)
 
-#         print(resp.json())
-#         return(resp.json())
+        print(resp.json())
+        return(resp.json())
 
         
-#     # Kucoin Spot Trade
-#     if data['platform'].upper() == "KUCOIN":
-#         # Get account balances
-#         user_account = kucoin_client.get_accounts()
+    # Kucoin Spot Trade
+    if data['platform'].upper() == "KUCOIN":
+        # Get account balances
+        user_account = kucoin_client.get_accounts()
 
-#         baseAsset = ""
-#         quoteAsset = ""
+        baseAsset = ""
+        quoteAsset = ""
 
-#         # Assign IDs to trade
-#         for i in user_account:
-#             print(i)
-#             if i['currency'] == data['exchange_pair'].split('-')[0] and i['type'] == "trade":
-#                 print(data['exchange_pair'].split('-')[0])
+        # Assign IDs to trade
+        for i in user_account:
+            print(i)
+            if i['currency'] == data['exchange_pair'].split('-')[0] and i['type'] == "trade":
+                print(data['exchange_pair'].split('-')[0])
                 
-#                 baseAsset = i['id']
-#             elif i['currency'] == data['exchange_pair'].split('-')[1] and i['type'] == "trade":
-#                 quoteAsset = i['id']
+                baseAsset = i['id']
+            elif i['currency'] == data['exchange_pair'].split('-')[1] and i['type'] == "trade":
+                quoteAsset = i['id']
         
-#         if data['side'].upper() == "LONG":
-#             buying_amount = kucoin_client.get_account(quoteAsset)
-#             price = kucoin_client.get_ticker(symbol=data['exchange_pair'])
-#             buying_amount = float(round(float(buying_amount['balance']) - 1, 2))
-#             print(buying_amount)
-#             order = kucoin_client.create_market_order(data['exchange_pair'], Client.SIDE_BUY, funds=buying_amount)
+        if data['side'].upper() == "LONG":
+            buying_amount = kucoin_client.get_account(quoteAsset)
+            price = kucoin_client.get_ticker(symbol=data['exchange_pair'])
+            buying_amount = float(round(float(buying_amount['balance']) - 1, 2))
+            print(buying_amount)
+            order = kucoin_client.create_market_order(data['exchange_pair'], Client.SIDE_BUY, funds=buying_amount)
 
-#         if data['side'].upper() == "SHORT":
-#             selling_amount = kucoin_client.get_account(baseAsset)
-#             selling_amount = float(round(float(selling_amount['balance']) - 0.1, 2))
-#             print(selling_amount)
-#             order = kucoin_client.create_market_order(data['exchange_pair'], Client.SIDE_SELL, size=selling_amount)
+        if data['side'].upper() == "SHORT":
+            selling_amount = kucoin_client.get_account(baseAsset)
+            selling_amount = float(round(float(selling_amount['balance']) - 0.1, 2))
+            print(selling_amount)
+            order = kucoin_client.create_market_order(data['exchange_pair'], Client.SIDE_SELL, size=selling_amount)
 
-#         print(order)
-#         return(order)
+        print(order)
+        return(order)
 
 
-# @app.route('/binance_futures_trade', methods=['POST'])
-# def binance_futures_trade():
-#     # Load data from post
-#     data = json.loads(request.data)
+@app.route('/binance_futures_trade', methods=['POST'])
+def binance_futures_trade():
+    # Load data from post
+    data = json.loads(request.data)
 
-#     # Check for security phrase
-#     if data['passphrase'] != config.WEBHOOK_PHRASE:
-#         return {
-#             "code": "error",
-#             "message": "Nice try, invalid passphrase"
-#         }
+    # Check for security phrase
+    if data['passphrase'] != config.WEBHOOK_PHRASE:
+        return {
+            "code": "error",
+            "message": "Nice try, invalid passphrase"
+        }
 
-#     count = 0
-#     long_term_counter = 0
-#     open_order = client.futures_get_open_orders(symbol=data['exchange_pair'])
+    count = 0
+    long_term_counter = 0
+    open_order = client.futures_get_open_orders(symbol=data['exchange_pair'])
     
-#     for i in open_order:
-#         if i['positionSide'] == data['side'].upper():
-#             count += 1
+    for i in open_order:
+        if i['positionSide'] == data['side'].upper():
+            count += 1
 
     
 
-#     exchanges = client.futures_exchange_info()
+    exchanges = client.futures_exchange_info()
 
-#     for x in exchanges['symbols']:
-#         if x['symbol'] == data['exchange_pair']:
-#             volume_precision = x['quantityPrecision']
+    for x in exchanges['symbols']:
+        if x['symbol'] == data['exchange_pair']:
+            volume_precision = x['quantityPrecision']
 
-#     if data['side'].upper() == 'LONG':
-#         if data['action'].upper() == "OPEN":
+    if data['side'].upper() == 'LONG':
+        if data['action'].upper() == "OPEN":
 
-#             if data['pyramid_count'] <= count:
-#                 return("Too many trades already open")
+            if data['pyramid_count'] <= count:
+                return("Too many trades already open")
 
-#             # Get exchange pair decimals
-#             # step = client.get_symbol_info(data['exchange_pair'])
-#             # stepMin = step['filters'][2]['stepSize']
-#             # stepMinSize = 8 - stepMin[::-1].find('1')
+            # Market Order with Take Profit
+            if data['trade_type'].upper() == 'TAKEPROFIT':
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
 
-#             # d = decimal.Decimal(str(data['close']))
-#             # d = d.as_tuple().exponent * -1
+                # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+                takeProfit = round(takeProfit, 2)
 
-#             # if d < stepMinSize:
-#             #     stepMinSize = d
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
 
-#             # Market Order with Take Profit
-#             if data['trade_type'].upper() == 'TAKEPROFIT':
-#                 if data['using_roe'] == True:
-#                     takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
-#                 else:
-#                     takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+                    resp = client.futures_mark_price()
+                    price = ""
 
-#                 # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
-#                 takeProfit = round(takeProfit, 2)
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
 
-#                 if "volume" in data:
-#                     volume = data['volume']
-#                 elif "percentage" in data:
-#                     resp = client.futures_account_balance()
-#                     balance = resp[1]['balance']
+                    volume = round((float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage'])), 2)
+                    print(volume)
 
-#                     resp = client.futures_mark_price()
-#                     price = ""
-
-#                     for i in resp:
-#                         if i['symbol'] == data['exchange_pair']:
-#                             price = i['markPrice']
-
-#                     volume = round((float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage'])), 2)
-#                     print(volume)
-
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
             
-#             # Market Order with Trailing Stop Loss
-#             if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
-#                 activation_price = float(data['close']) * 1.0003
+            # Market Order with Trailing Stop Loss
+            if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
+                activation_price = float(data['close']) * 1.0003
 
-#                 if "volume" in data:
-#                     volume = data['volume']
-#                 elif "percentage" in data:
-#                     resp = client.futures_account_balance()
-#                     balance = resp[1]['balance']
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
 
-#                     resp = client.futures_mark_price()
-#                     price = ""
+                    resp = client.futures_mark_price()
+                    price = ""
 
-#                     for i in resp:
-#                         if i['symbol'] == data['exchange_pair']:
-#                             price = i['markPrice']
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
 
-#                     volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="TRAILING_STOP_MARKET", quantity=round(volume, volume_precision), activationPrice=activation_price, positionSide='LONG', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="TRAILING_STOP_MARKET", quantity=round(volume, volume_precision), activationPrice=activation_price, positionSide='LONG', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
 
-#             # Market Order with Take Profit Limit and Market Stop Loss
-#             if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
-#                 client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+            # Market Order with Take Profit Limit and Market Stop Loss
+            if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
+                client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
                 
-#                 for i in open_order:
-#                     if i['positionSide'] == "SHORT":
-#                         long_term_counter += 1
+                for i in open_order:
+                    if i['positionSide'] == "SHORT":
+                        long_term_counter += 1
 
-#                 if "volume" in data:
-#                     volume = data['volume']
-#                 elif "percentage" in data:
-#                     resp = client.futures_account_balance()
-#                     balance = resp[1]['balance']
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
 
-#                     resp = client.futures_mark_price()
-#                     price = ""
+                    resp = client.futures_mark_price()
+                    price = ""
 
-#                     for i in resp:
-#                         if i['symbol'] == data['exchange_pair']:
-#                             price = i['markPrice']
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
 
-#                     volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
                         
-#                 if long_term_counter > 0:
-#                     client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                if long_term_counter > 0:
+                    client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-#                 time.sleep(1)
+                time.sleep(1)
 
-#                 if data['using_roe'] == True:
-#                     takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
-#                 else:
-#                     takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) + ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
 
-#                 if data['using_roe'] == True:
-#                     stopLoss = float(data['close']) - ((float(data['close']) * data['loss']) / data['leverage'])
-#                 else:
-#                     stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
+                if data['using_roe'] == True:
+                    stopLoss = float(data['close']) - ((float(data['close']) * data['loss']) / data['leverage'])
+                else:
+                    stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
                 
-#                 takeProfit = round(takeProfit, 2)
-#                 stopLoss = round(stopLoss, 2)
+                takeProfit = round(takeProfit, 2)
+                stopLoss = round(stopLoss, 2)
                 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='LONG', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="STOP_MARKET", quantity=round(volume, volume_precision), stopPrice=stopLoss, positionSide='LONG', timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, type="STOP_MARKET", quantity=round(volume, volume_precision), stopPrice=stopLoss, positionSide='LONG', timeInForce=TIME_IN_FORCE_GTC)
 
 
-#         if data['action'].upper() == "CLOSE":
-#             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+        if data['action'].upper() == "CLOSE":
+            client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
 
-#             positions = client.futures_position_information()
+            positions = client.futures_position_information()
 
-#             for i in positions:
-#                 if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
-#                     volume = float(i['positionAmt'])
+            for i in positions:
+                if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
+                    volume = float(i['positionAmt'])
 
-#             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-#     elif data['side'].upper() == 'SHORT':
-#         if data['action'].upper() == "OPEN":
+    elif data['side'].upper() == 'SHORT':
+        if data['action'].upper() == "OPEN":
 
-#             if data['pyramid_count'] <= count:
-#                 return("Too many trades already open")
+            if data['pyramid_count'] <= count:
+                return("Too many trades already open")
 
-#             # Get exchange pair decimals
-#             # step = client.get_symbol_info(data['exchange_pair'])
-#             # stepMin = step['filters'][2]['stepSize']
-#             # stepMinSize = 8 - stepMin[::-1].find('1')
+            # Market Order with Take Profit
+            if data['trade_type'].upper() == 'TAKEPROFIT':
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
 
-#             # d = decimal.Decimal(str(data['close']))
-#             # d = d.as_tuple().exponent * -1
+                # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
+                takeProfit = round(takeProfit, 2)
 
-#             # if d < stepMinSize:
-#             #     stepMinSize = d
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
 
-#             # Market Order with Take Profit
-#             if data['trade_type'].upper() == 'TAKEPROFIT':
-#                 if data['using_roe'] == True:
-#                     takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
-#                 else:
-#                     takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
+                    resp = client.futures_mark_price()
+                    price = ""
 
-#                 # takeProfit = round(takeProfit - float(stepMin), stepMinSize)
-#                 takeProfit = round(takeProfit, 2)
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
 
-#                 if "volume" in data:
-#                     volume = data['volume']
-#                 elif "percentage" in data:
-#                     resp = client.futures_account_balance()
-#                     balance = resp[1]['balance']
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
 
-#                     resp = client.futures_mark_price()
-#                     price = ""
-
-#                     for i in resp:
-#                         if i['symbol'] == data['exchange_pair']:
-#                             price = i['markPrice']
-
-#                     volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
-
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
         
-#             # Market Order with Trailing Stop Loss
-#             if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
-#                 activation_price = float(data['close']) * 0.9997
+            # Market Order with Trailing Stop Loss
+            if data['trade_type'].upper() == 'TRAILINGSTOPLOSS':
+                activation_price = float(data['close']) * 0.9997
 
-#                 if "volume" in data:
-#                     volume = data['volume']
-#                 elif "percentage" in data:
-#                     resp = client.futures_account_balance()
-#                     balance = resp[1]['balance']
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
 
-#                     resp = client.futures_mark_price()
-#                     price = ""
+                    resp = client.futures_mark_price()
+                    price = ""
 
-#                     for i in resp:
-#                         if i['symbol'] == data['exchange_pair']:
-#                             price = i['markPrice']
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
 
-#                     volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="TRAILING_STOP_MARKET", quantity=round(volume, volume_precision), activationPrice=activation_price, positionSide='SHORT', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="TRAILING_STOP_MARKET", quantity=round(volume, volume_precision), activationPrice=activation_price, positionSide='SHORT', callbackRate=float(data['trail']), timeInForce=TIME_IN_FORCE_GTC)
 
-#             # Market Order with Take Profit Limit and Market Stop Loss
-#             if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
-#                 client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+            # Market Order with Take Profit Limit and Market Stop Loss
+            if data['trade_type'].upper() == 'TAKEPROFIT_STOPLOSS_SINGLE':
+                client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
 
-#                 for i in open_order:
-#                     if i['positionSide'] == "LONG":
-#                         long_term_counter += 1
+                for i in open_order:
+                    if i['positionSide'] == "LONG":
+                        long_term_counter += 1
 
-#                 if "volume" in data:
-#                     volume = data['volume']
-#                 elif "percentage" in data:
-#                     resp = client.futures_account_balance()
-#                     balance = resp[1]['balance']
+                if "volume" in data:
+                    volume = data['volume']
+                elif "percentage" in data:
+                    resp = client.futures_account_balance()
+                    balance = resp[1]['balance']
 
-#                     resp = client.futures_mark_price()
-#                     price = ""
+                    resp = client.futures_mark_price()
+                    price = ""
 
-#                     for i in resp:
-#                         if i['symbol'] == data['exchange_pair']:
-#                             price = i['markPrice']
+                    for i in resp:
+                        if i['symbol'] == data['exchange_pair']:
+                            price = i['markPrice']
 
-#                     volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+                    volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
 
-#                 if long_term_counter > 0:
-#                     client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                if long_term_counter > 0:
+                    client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='LONG', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-#                 time.sleep(1)
+                time.sleep(1)
 
-#                 if data['using_roe'] == True:
-#                     takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
-#                 else:
-#                     takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
+                if data['using_roe'] == True:
+                    takeProfit = float(data['close']) - ((float(data['close']) * data['profit']) / data['leverage'])
+                else:
+                    takeProfit = float(data['close']) - (float(data['close']) * (data['profit']/100))
 
-#                 if data['using_roe'] == True:
-#                     stopLoss = float(data['close']) + ((float(data['close']) * data['loss']) / data['leverage'])
-#                 else:
-#                     stopLoss = float(data['close']) + (float(data['close']) * (data['loss']/100))
+                if data['using_roe'] == True:
+                    stopLoss = float(data['close']) + ((float(data['close']) * data['loss']) / data['leverage'])
+                else:
+                    stopLoss = float(data['close']) + (float(data['close']) * (data['loss']/100))
                 
-#                 takeProfit = round(takeProfit, 2)
-#                 stopLoss = round(stopLoss, 2)
+                takeProfit = round(takeProfit, 2)
+                stopLoss = round(stopLoss, 2)
                 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_SELL, positionSide='SHORT', type=FUTURE_ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type=FUTURE_ORDER_TYPE_LIMIT, quantity=round(volume, volume_precision), positionSide='SHORT', price=takeProfit, timeInForce=TIME_IN_FORCE_GTC)
 
-#                 client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="STOP_MARKET", quantity=round(volume, volume_precision), stopPrice=stopLoss, positionSide='SHORT', timeInForce=TIME_IN_FORCE_GTC)
+                client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, type="STOP_MARKET", quantity=round(volume, volume_precision), stopPrice=stopLoss, positionSide='SHORT', timeInForce=TIME_IN_FORCE_GTC)
 
-#         if data['action'].upper() == "CLOSE":
-#             client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
+        if data['action'].upper() == "CLOSE":
+            client.futures_cancel_all_open_orders(symbol=data['exchange_pair'])
 
-#             positions = client.futures_position_information()
+            positions = client.futures_position_information()
 
-#             for i in positions:
-#                 if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
-#                     volume = float(i['positionAmt'])
+            for i in positions:
+                if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
+                    volume = float(i['positionAmt'])
 
-#             client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
+            client.futures_create_order(symbol=data['exchange_pair'], side=SIDE_BUY, positionSide='SHORT', type=ORDER_TYPE_MARKET,  quantity=round(volume, volume_precision), isolated=False)
 
-#     return("Done")
+    return("Done")
 
 
-# @app.route('/binance_test', methods=['POST'])
-# def binance_test():
-#     # Load data from post
-#     data = json.loads(request.data)
+@app.route('/binance_test', methods=['POST'])
+def binance_test():
+    # Load data from post
+    data = json.loads(request.data)
 
-#     # takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
-#     # takeProfit = round(takeProfit, 4)
+    # takeProfit = float(data['close']) + (float(data['close']) * (data['profit']/100))
+    # takeProfit = round(takeProfit, 4)
 
-#     # stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
-#     # stopLoss = round(stopLoss, 4)
+    # stopLoss = float(data['close']) - (float(data['close']) * (data['loss']/100))
+    # stopLoss = round(stopLoss, 4)
 
-#     # order_response = order_function_market("BUY", 100, "DOGEUSDT", ORDER_TYPE_MARKET)
-#     # print(order_response)
-#     # resp = client.create_oco_order(symbol="DOGEUSDT", side="SELL", quantity="100", price=str(takeProfit), stopPrice=str(round(stopLoss - 0.0001, 4)), stopLimitPrice=str(stopLoss), stopLimitTimeInForce='GTC')
-#     # print(resp)
+    # order_response = order_function_market("BUY", 100, "DOGEUSDT", ORDER_TYPE_MARKET)
+    # print(order_response)
+    # resp = client.create_oco_order(symbol="DOGEUSDT", side="SELL", quantity="100", price=str(takeProfit), stopPrice=str(round(stopLoss - 0.0001, 4)), stopLimitPrice=str(stopLoss), stopLimitTimeInForce='GTC')
+    # print(resp)
 
-#     # resp = client.get_open_orders(symbol="BTCUSDT")
-#     # print(resp)
+    # resp = client.get_open_orders(symbol="BTCUSDT")
+    # print(resp)
 
-#     # resp = client.cancel_order(symbol="BTCUSDT", orderId=resp[0]['orderId'])
-#     # print(resp)
+    # resp = client.cancel_order(symbol="BTCUSDT", orderId=resp[0]['orderId'])
+    # print(resp)
 
-#     # tick = client.get_symbol_info(data['exchange_pair'])
-#     # tickMin = tick['filters'][0]['tickSize']
-#     # tickMinSize = 8 - tickMin[::-1].find('1')
-#     # print(tickMinSize)
+    # tick = client.get_symbol_info(data['exchange_pair'])
+    # tickMin = tick['filters'][0]['tickSize']
+    # tickMinSize = 8 - tickMin[::-1].find('1')
+    # print(tickMinSize)
 
-#     # exchanges = client.futures_exchange_info()
+    # resp = client.futures_mark_price()
+    # price = ""
 
-#     # for x in exchanges['symbols']:
-#     #     if x['symbol'] == data['exchange_pair']:
-#     #         print(x['quantityPrecision'])
-
-#     # hold = 5
-
-#     # resp = client.futures_account_balance()
-#     # balance = resp[1]['balance']
+    # for i in resp:
+    #     if i['symbol'] == data['exchange_pair']:
+    #         print(i['lastFundingRate'])
+    #         price = i['markPrice']
     
-#     # balance = 100
-#     # print(balance * float(data['percentage'] / 100))
+    # print(price)
+    # print(decimal.Decimal(price).as_tuple().exponent)
 
-#     # resp = client.futures_mark_price()
-#     # price = ""
+    # exchanges = client.futures_exchange_info()
 
-#     # for i in resp:
-#     #     if i['symbol'] == data['exchange_pair']:
-#     #         price = i['markPrice']
+    # resp = client.futures_change_leverage(symbol="BNBUSDT", leverage=1)
+    # print(resp)
 
-#     # print(price)
+    # for x in exchanges['symbols']:
+    #     if x['symbol'] == data['exchange_pair']:
+            # print(x['pricePrecision'])
+            # print(x)
 
-#     # volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
-#     # print(volume)
-#     positions = client.futures_position_information()
+    # hold = 5
 
-#     for i in positions:
-#         if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
-#             volume = i['positionAmt']
-#             print(type(volume))
+    # resp = client.futures_account_balance()
+    # balance = resp[1]['balance']
     
-#     return("done")
+    # balance = 100
+    # print(balance * float(data['percentage'] / 100))
 
-# @app.route('/binance_futures_test', methods=['POST'])
-# def binance_futures_test():
+    # resp = client.futures_mark_price()
+    # price = ""
+
+    # for i in resp:
+    #     if i['symbol'] == data['exchange_pair']:
+    #         price = i['markPrice']
+
+    # print(price)
+
+    # volume = (float(balance) * float(data['percentage'] / 100) ) / (float(price) / float(data['leverage']))
+    # print(volume)
+
+    # positions = client.futures_position_information()
+    # print(positions)
+
+    # for i in positions:
+    #     if i['symbol'] == data['exchange_pair'] and i['positionSide'] == data['side']:
+    #         volume = i['positionAmt']
+    #         print(type(volume))
+
+    # step = client.get_symbol_info(symbol=data['exchange_pair'])
+    # stepMin = step['filters'][2]['stepSize']
+    # stepMinSize = 8 - stepMin[::-1].find('1')
+
+    # if float(stepMin) == 1:
+    #     print("0")
+    # else:
+    #     print(stepMinSize)
+
+    # resp = client.futures_get_open_orders()
+    # print(resp)
+    # resp = client.futures_position_information()
+    # print(resp)
+
+    # resp = client.futures_account_balance()
+    # print(resp)
+
+    # for i in resp['balances']:
+    #     print(i)
+
+    resp = client.futures_change_position_mode(dualSidePosition=True)
+    print(resp)
+
+    return("done")
+
+@app.route('/binance_futures_test', methods=['POST'])
+def binance_futures_test():
     
-#     client.futures_change_leverage(symbol="BTCUSDT", leverage=1)
+    # client.futures_change_leverage(symbol="ETHUSDT", leverage=20)
+    # test = client.get_exchange_info()
+    # print(test)
+    # client.futures_account_balance()
+    # resp = client.futures_account_trades(symbol='MATICUSDT')
+
+    resp = client.futures_get_all_orders(symbol='SOLUSDT')
+    for i in resp:
+        print(i['symbol'], i['type'], i['positionSide'], i['side'], i['status'])
+        print(datetime.fromtimestamp(int(i['time'])/1000))
+
+    print()
+
+    resp = client.futures_get_all_orders(symbol='MATICUSDT')
+    for i in resp:
+        print(i['symbol'], i['type'], i['positionSide'], i['side'], i['status'])
+        print(datetime.fromtimestamp(int(i['time'])/1000))
+
+    # positions = client.futures_position_information()
+    # resp = client.futures_get_open_orders(symbol="SOLUSDT")
+    # for i in positions:
+    #     if i['positionAmt'] != '0':
+    #         if i['positionAmt'] != '0.0':
+    #             if i['positionAmt'] != '0.00':
+    #                 if i['positionAmt'] != '0.000':
+    #                     print(i)
+    #                     resp = client.futures_get_open_orders(symbol=i['symbol'])
+    #                     print(resp)
+    #     print(datetime.fromtimestamp(int(i['time'])/1000))
+
+    # print(datetime.fromtimestamp(int("1636999914470")/1000))
     
-#     return("Done")
+    return("Done")
 
 @app.route('/encode_test', methods=['POST'])
 def encode_test():
@@ -700,12 +750,101 @@ def security_check():
 
     return("Done")
 
-# Home page
-# @app.route('/')
-# def welcome():
-#     balances = client.get_account()['balances']
+@app.route('/cryptoadvisor_encryption', methods=['POST'])
+def cryptoadvisor_encryption():
+    # Load data from post
+    data = json.loads(request.data)
+    # new_string = ""
 
-#     return render_template('old_index.html', balances=balances)
+    # for i in data['text']:
+    #     new_string += "'" + i + "'"
+
+    # print(new_string)
+
+    # old_string = ""
+
+    # for i in new_string.split("'"):
+    #     if i != "":
+    #         old_string += i
+
+    # print(old_string)
+
+    key = -1
+
+    translated = ""
+
+    for symbol in data['text']:
+        if symbol.isalpha():
+            num = ord(symbol)
+            num += key
+
+            if symbol.isupper():
+                if num > ord('Z'):
+                    num -= 26
+                elif num < ord('A'):
+                    num += 26
+            elif symbol.islower():
+                if num > ord('z'):
+                    num -= 26
+                elif num < ord('a'):
+                    num += 26
+            
+            translated += chr(num)
+        else:
+            translated += symbol
+    
+    print(translated)
+
+    return(translated)
+
+@app.route('/binance_stream_btc', methods=['POST'])
+def binance_stream_btc():
+
+    symbol = 'BNBUSDT'
+
+    twm = ThreadedWebsocketManager(api_key=config.API_KEY, api_secret=config.API_SECRET)
+    # start is required to initialise its internal loop
+    twm.start()
+
+    def handle_socket_message(msg):
+        # print(f"message type: {msg['e']}")
+        print(msg)
+
+    # twm.start_kline_socket(callback=handle_socket_message, symbol=symbol)
+    twm.start_individual_symbol_ticker_futures_socket(callback=handle_socket_message, symbol=symbol)
+    twm.start_symbol_ticker_socket(callback=handle_socket_message, symbol=symbol)
+
+    # multiple sockets can be started
+    # twm.start_depth_socket(callback=handle_socket_message, symbol=symbol)
+
+    # or a multiplex socket can be started like this
+    # see Binance docs for stream names
+    # streams = ['bnbbtc@miniTicker', 'bnbbtc@bookTicker']
+    # twm.start_multiplex_socket(callback=handle_socket_message, streams=streams)
+
+    twm.join()
+
+    return('Done')
+
+# Home page
+@app.route('/')
+def welcome():
+    balances = client.get_account()['balances']
+
+    return render_template('old_index.html', balances=balances)
+
+# Trading page
+@app.route('/trading')
+def trading():
+    exchange_pairs = []
+
+    return render_template('old_index.html', exchange_pairs=exchange_pairs)
+
+@app.route('/', methods=['POST'])
+def my_form_post():
+    text = request.form['text']
+    processed_text = text.upper()
+    return processed_text
 
 
 # @app.route('/moon')
